@@ -1,0 +1,15 @@
+{
+  "name": "run-loop-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ember-noisy-runloop.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "handlebars": "^1.3.0",
+    "jquery": "^2.1.1"
+  }
+}
