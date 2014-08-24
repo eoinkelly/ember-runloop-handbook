@@ -75,5 +75,5 @@ These are other sources I studied in compiling this research:
 
 ## Contributing
 
-You should. :-). If you spot any of the (inevitable)errors, omissions, things
+You should. :-). If you spot any of the (inevitable) errors, omissions, things
 which are unclear you would be doing me a great favour by opening an issue.

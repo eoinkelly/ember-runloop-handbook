@@ -1,0 +1,13 @@
+{
+  "name": "noisy-runloop",
+  "version": "0.0.0",
+  "homepage": "https://github.com/eoinkelly/ember-runloop-handbook",
+  "authors": [
+    "Eoin Kelly <eoin@rabidtech.co.nz>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "ember": "~1.7.0"
+  }
+}
