@@ -3,6 +3,49 @@
 _These are my in progress notes, designed to be read as plain text. Markdown
 formatting here will be crappy_
 
+The tenets of the runloop
+    * batch similar work together
+        define similar ???
+
+we want to be able to control the order of execution not just execute it as we
+find it
+
+it is embers way of first creating a todo list, then putting it in order and
+then doing it
+it is embers internal kanban board
+
+rule of thumb: any event handlers i register should do their work in a runloop
+
+TODO: can i see log when queues start executing???
+
+TODO: dig into .observe() - I think it runs outside the runloop?
+
+TODO: differentiate in the runloop API which calls create a new runloop and
+which work with an existing one
+
+# auto-creating runloops
+
+* if ember detects an event handler running (how???) it opens a runloop and
+  closes it (which actually executes your code) on the next JS event loop turn
+* this is bad because your code does not run in the turn you thought it would
+  and there can be a gap between turns if the browser decides to do GC etc.
+
+# runloops and testing
+
+Ember disables "autoruns" during testing
+QUESTION: what exactly are these? Are they the "auto creating" descdribed above
+or domething different?
+
+TODO: need a section on how the runloop and testing
+    how does it behave differently
+    why is this the case?
+    what do youneed to know
+
+"Some of Ember's test helpers are promises that wait for the run loop to empty
+before resolving."
+
+# other stuff
+
 The runloop has the concept of a "currently open instance".
 
 The runloop marks the start and end of ember related JS execution
@@ -38,7 +81,7 @@ The point of calling Ember.run is to allow the RunLoop to track all of the async
 
 
 Backburner
-    * Aliased as `Ember.run` in Ember
+    * Aliased as `Ember.run.backburner` in Ember
 
 * defer() Ember.run.schedule()
     * if no currently open runloop, will create an autorun, otherwise they will
@@ -54,16 +97,17 @@ Backburner
 * later() Ember.run.setTimeout()
     * ?
 
-* `run(callback)` _"run this callback on the 'actions' queue of a new runloop"_
-    * Open a new runloop, schedule the given callback on 'actions', then close &
-      flush all the queues.
-    * the opening, running the callback and closing of the runloop happens in
-      the curent turn of the browser event loop
+
+* `run(callback)`
+    * It does *NOT* schedule your callback on a queue!
     * will create a new insance of DeferredActionQueues even if an existing
-      instance is already open. It will synchronously create a new runloop, run
-      the callback and then flush the runloop before returning
-    * is synchronous! It finishes a complete trip through the runloop before
-      returning
+      instance is already open. It will synchronously
+        1. create a new runloop,
+        2. run your callback in a try {}
+        3. end and flush the runloop in finally {}
+        4. return whatever your callback returned
+    * is synchronous - everything happens in a single turn of the event loop! It
+      finishes a complete trip through the runloop before returning
     * Implications:
         * You can use run() to schedule stuff on any queue by calling
           `Ember.run.schedule` from within the callback e.g. you can schedule
@@ -122,11 +166,24 @@ Queue
     * this is where the action is! This is what actually processes the queues
 * cancel()
 
+Ember.run (not in backburner
+
+join()
+    from docs:
+    If no run-loop is present, it creates a new one. If a run loop is
+    present it will queue itself to run on the existing run-loops action
+    queue.
+
+    Please note: This is not for normal usage, and should be used sparingly.
+
 ## An autorun is
 * calls begin() and schedules an end() (using setTimeout) on the very next turn of the event loop
 * opens a runloop that will only stay open for this turn of the event loop
 * disabled in testing mode
     * ??? what exactly happens in testing mode?
+
+TODO: I need to deal specifically with this as it is an important difference
+between how ember manages runloops and how backburner does it
 
 ## Ember in action explanation
 
@@ -379,4 +436,127 @@ QUESTION: follow the trail of a click that results in some ember action from the
 event handler through ember.
 
 QUESTION: How many runloops does ember run in response to a single click?
+
+# Experiment: log out the name of the queue being flushed
+
+When our very simple app started up we saw:
+
+```
+DEBUG: Started runloop: 1 ember.js:14469
+DEBUG: Tweaking built-in events to my liking ember.js:14469
+DEBUG: Ending & flushing runloop:1 ember.js:14469
+DEBUG: Flushing DeferredActionQueues object ember.js:14469
+DEBUG: Flushing queue: sync ember.js:14469
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+DEBUG: Flushing queue: actions
+... lots more
+DEBUG: Flushing queue: actions
+```
+
+From stepping through the code it seems that ember put a single function on the
+actions queue but that function scheduled more work on the actions queue and
+this kept happening for quite a while
+
+
+### how the queue is
+
+DeferredActionQueues.flush()
+checks each queue sequentially
+scans all queues in order to decide which queue to process next (it defaults to going to next queue)
+
+Conclusion: queues are not "finished" before checking for work on earlier queues - the
+check happens afer each function (chunk of work) is run.
+
+`DeferredActionQueues` is {}
+    key = queue name
+    value = Queue object
+
+`Queue._queue` is an array
+    a function call on the queue is represented by a 4 element block of the
+    array [targer, method|methodName, args, stack]
+    e.g. if there are 3 function calls on the queue the array will have 12
+    elements
+
+Conclusion: It is not true to say that the Ember splits work into a "scheduling"
+and a "doing" phase because functions executed in the "doing" phase can also
+schedule work.
+
+
+# Experiment: what happens if I call Ember.run within the application ready()
+
+I added the current runloop ID to each log message
+
+Results
+The normal ember boot-time runloop started and then end()/flush() was called on
+it.
+Then my runloop (2) started, ended and its flush completed fully
+Then the flush for runloop 1 finished.
+
+It seems like runloops created with Ember.run start,end,finish flush in one turn
+of event loop - is this true?
+
+runloop-1 (the normal ember one) had ended before mine started (even though its
+flush was not complete - can there be more than one open runloop at a time?
+
+CONCLUSION: runloops can interleave (or at least their flushing does)
+    or is this just comparing an internal ember runloop to one i made with
+    Ember.run - are Ember.run loops "special"
+
+I created some nested Ember.run calls - the timing looked like:
+
+- outer start
+- inner start
+- inner end
+- inner flush completed
+- outer end
+- outer flush completed
+
+
+
+CONCLUSION:
+if we consider the callback you pass the runloop a "chunk of work" then
+    runloop's job is to make sure that your chunk gets properly processed by
+    Ember itself - the runloop is *not* responsible for coordinating *all* work
+    currently being done by ember.
+
+    Runloops are not a gateway to the DOM - I *think* this is diff to angular
+    where all access to the DOM goes through a single gateway (the dirty check)
+    - TODO: check this
+
+
+# Experiment: How does ember kick off its first runloop
+
+* It uses run() not begin()/end()
+* It kicks off from `App.scheduleInitialize()` which puts `App._initialize()` within
+  a runloop with run()
+
+
+When does ember run runloops
+
+1. it runs one at boot time
+2. it runs one in response to each DOM event
+
+
+
+# Experiment: is Ember.run started synchronously or put on a queue?
+
+Yes. `Ember.run` is a synchronous function that will
+
+1. open a runloop
+2. execute your callback
+3. end the runloop
+4. flush the runloop
+    * runs any callbacks which have been scheduled
+
+NOTE: The callback you supply to Ember.run does *not* run on a queue - it runs
+synchronously. It can schedule other callbacks on the queues (either explicitly
+or implicitly)
+it will return whatever your callback returns
+
 
