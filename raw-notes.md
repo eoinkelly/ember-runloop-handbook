@@ -176,14 +176,93 @@ join()
 
     Please note: This is not for normal usage, and should be used sparingly.
 
-## An autorun is
-* calls begin() and schedules an end() (using setTimeout) on the very next turn of the event loop
-* opens a runloop that will only stay open for this turn of the event loop
-* disabled in testing mode
-    * ??? what exactly happens in testing mode?
 
-TODO: I need to deal specifically with this as it is an important difference
-between how ember manages runloops and how backburner does it
+## auto run methods: createAutorun() and checkAutoRun()
+
+* createAutorun()
+    * calls begin() immediately and schedules an end() (using setTimeout) on the very next turn of the event loop
+    * i.e. opens a runloop that will stay open for this turn of the event loop
+    * is only called by `backburner.defer()` and `backburner.deferOnce()`! Two places total!
+
+* checkAutoRun()
+    * If there isn't a currently open runloop, it checks whether `Ember.testing` is
+      set. If it isn't it throws an error about how autoruns will not work
+
+The docs are *not* referring to these methods when they say "auto runs are disbled in testing
+mode"
+
+
+## What *does* change about ember (esp runloop) in testing mode?
+
+Testing mode is
+
+Ember.setupForTesting()
+    * loads 'ember-testing/test' into Ember.Test (if Test doesn't exist)
+    * sets Ember.testing = true
+    * if no adapter configured for sets Ember.Test adpater to Qunit
+    * Add listeners to  'ajaxSend' and 'ajaxComplete' events (checking that we
+      are not adding dupes of listeners.
+        * Ember.Test.pendingAjaxRequests monitors 'ajaxSend' and 'ajaxComplete' to
+        keep track of which XHR requests are in flight
+        * => Ember knows what ajax requests are in flight when in testing mode - why???
+
+* App.setupForTesting()
+    * Sets App.testing = true
+    * calls Ember.setupForTesting()
+    * sets router location to 'none'
+
+```js
+// How to manually set the router location to 'none'
+App.Router.reopen({
+    location: 'none'
+});
+```
+
+
+When `App.testing` and `Ember.testing` are true the app behaves differently
+
+1. Ember.Application.didBecomeReady
+    * does not set Ember.BOOTED to true
+    * does not process the namespace
+2. Does not tell dev about ember inspector
+3. checkAutoRun()
+4. RSVP.onErrorDefault
+    * will send any exception to the test adapter
+5. RSVP.configure
+    * calls asyncStart() and asyncEnd() around a runloop
+6. Ember adds a new initializer that calls deferReadiness() once (if App.testing is true)
+7. Ember monitors 'ajaxSend' and 'ajaxComplete' to keep track of what XHR
+   requests are in flight
+8. `Ember.Test` has its own internal `run()` that will use the normal runloop
+   `run()` if a runloop is open or otherwise just run the provide calback
+   synchronously
+
+
+There are a number of Ember.run functions that will create a runloop an
+"autorun" runloop if none exists. the `checkAutoRun()` is there to prevent that
+happening when `Ember.testing` is set.
+
+### Why is autoruns disabled in testing mode
+
+> Some of Ember's test helpers are promises that wait for the run loop to empty
+> before resolving. This leads to resolving too early if there is code that is
+> outside the run loop and gives erroneous test failures. Disabling autoruns help
+> you identify these scenarios and helps both your testing and your application!
+
+It seems like they want us to realise when we are running code outo
+autoruns are a bit of a band-aid - if you run handlers ourside a runloop, ember
+will try to wrap it in one in production but not in testing - the test failures
+_should_ help find places where you are doing that
+
+And yet in practice I have just found this super confusing???
+
+Aside: Router NoneLocation
+
+      Using `NoneLocation` causes Ember to not store the applications URL state
+      in the actual URL. This is generally used for testing purposes, and is one
+      of the changes made when calling `App.setupForTesting()`.
+Ember.NoneLocation is an object (extends Ember.Object)
+It seems to be some sort of null object for router locations
 
 ## Ember in action explanation
 
