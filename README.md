@@ -39,18 +39,32 @@ outline the problems with vanilla JS approach
 the ember solution: run-loop
 go ghrough some detailed examples of event handling w. runloop added
 demo how to instrument the runloop in your app
-explain autoruns
+explain the bandaid that is autoruns
 explain granularity of the api
 
+discuss how often runloops happen, how long they last
 discuss trade-offs of the runloop
     - extra complexity to understand
     + better performance
 
-discuss some ideas for improving it (and the problems associated with them)?
+discuss some alternative ideas than the runloop that could solve the same
+problem (and the pros/cons associated with them)?
+    e.g. angular dirty checking
+        ?? react
+
+the API
+    give a high-level overview, help people mentally categorise it
+    what are the main categories of methods
+        which ones create new runloops
+        which ones assume an existing one
+        which ones perform a runloop cycle synchronously
+        which ones do that at some time in the future
 
 when do I _need_ to know about runloop API
     1. non ember js - show w. timeline how using vanilla JS outside runloop causes problem in ember
-    2. testing - explain why auto-run is truned off
+
+How is runloop behaviour different in testing?
+    explain why auto-run is turned off
 
 How to use the runloop API
     this is well covered in the guide, refer mostly to it
