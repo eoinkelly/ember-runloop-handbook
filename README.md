@@ -353,6 +353,37 @@ excellent visualisaiton of the algorithm works but in brief,
     * Ember will make sure that all previous queues are empty before moving on to the next one.
     * If some job
 
+
+Things the runloop is not
+
+* At first glance it may seem that the Runloop has two distinct phases
+    1. schedule work
+    2. perform the work
+  but this is subtly incorrect. Functions that have been scheduled on a Runloop queue
+  can themselves schedule function on **any** queue in the same runloop. It is
+  true that once the runloop starts executing the queues that code outside those
+  queues cannot schedule new jobs. In a sense the initial set of jobs that are
+  scheduled are a "starter set" of work and ember commits to performing and also
+  performing any jobs that result from those jobs - Ember is a pretty great
+  person to have working for you! :-)
+
+A more correct view is
+
+1. Open Runloop and accept any job given by any code.
+2. Close the "open access".
+3. Start executing any jobs. Accept any new jobs that are scheduled from jobs
+already on the runloop.
+4. Work thorugh each queue according to the runloop algorithm (TODO: more here)
+
+
+* It is not a "singleton" gateway to all DOM access
+
+There is no concept of "the" runloop, there can be multiple instances of "a
+runloop"
+TODO: be consistent in terminology of things on the runloop: jobs vs functions
+vs callbacks vs handlers
+
+  It does not have two distinct phases
 A consequence of this two phase "schedule and execute" approach is that all DOM
 
 TODO: it is not really "two phase" because while flushing the queue existing
