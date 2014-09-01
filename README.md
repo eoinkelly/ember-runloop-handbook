@@ -94,20 +94,24 @@ orders but the browser is a team player and has a few things it can do to help
 JS do its job.
 
 1. Timers. JS can use the browser like an alarm clock
-    > Hey browser, there is a chunk of work I need to do in 5 seconds. Can you
-    > make a new "event" for me that will fire when that time has elapsed so you
-    > can wake me up to do that work.
+
+> Hey browser, there is a chunk of work I need to do in 5 seconds. Can you
+> make a new "event" for me that will fire when that time has elapsed so you
+> can wake me up to do that work.
+
 2. Talking to other systems. If JS needs to send or receive data to other
 computers it asks the browser to do it and the browser promises to wake JS up
 again and report back how it got on
-    > JS: Hey browser, I want to get whatever data is at http://foo.com/things.json
-    > please.
-    > Browser: Sure thing but it might take a while (networks can be slow), I'll
-    > try to get that data and wake you up again when it is done. What do you
-    > want me to do when it comes back?
-    > JS: I have two chunks of work ready to go (one for a successful and one
-    > for a failure) so just wake me up to run them when you finish
-    > Browser: cool.
+
+> JS: Hey browser, I want to get whatever data is at http://foo.com/things.json
+> please.
+> Browser: Sure thing but it might take a while (networks can be slow), I'll
+> try to get that data and wake you up again when it is done. What do you
+> want me to do when it comes back?
+> JS: I have two chunks of work ready to go (one for a successful and one
+> for a failure) so just wake me up to run them when you finish
+> Browser: cool.
+
 Developers call this _talking to other systems_ stuff Web APIs e.g. XHR requests, Web workers
 etc.
 
@@ -129,8 +133,9 @@ certain element might be to retrieve some data from the network and also
 schedule a timer to do some future work.
 
 The general pattern of how javascript does work is
-1. In the short _setup phase_ the browser runs each script from start to finish. JS
-uses this as time to do some preparation for its real job.
+1. In the short _setup phase_ the browser runs each script it finds on the page
+from start to finish. JS uses this as time to do some preparation for its real
+job.
 2. In response to events. Many events come from the user but JS can also
 schedule events for itself by using the many services (web APIs) that the
 browser provides.
@@ -152,8 +157,8 @@ TODO:
 We need to know a little more detail on how Javascript tells the browser what
 events it cares about.
 
-The browser takes the string of HTML it got from the server and parses
-("understands") it into a _tree like_ structure in memory. We call this "tree
+The browser takes the string of HTML it got from the server and uses it to
+create  a _tree like_ structure in memory. We call this "tree
 structure" the Document Object Model or DOM for short. It is commonly called a
 "tree structure" but is usually visualied as an "upside down tree" or the root
 system of a tree.
@@ -172,10 +177,6 @@ actually arrives
 
 Timeline of response to browser event
 ![graph](https://docs.google.com/drawings/d/10HAJdly4R_31NE0n7Lt8XcLr_TlYwfsal-SZl7pINsM/pub?w=498&amp;h=749)
-
-```
-use a simpler version of the diagram above
-```
 
 ## An example with code
 
@@ -203,6 +204,7 @@ Lets look again at our sample set of events and see how JS might schedule work
 </html>
 ```
 
+same
 
 ```html
 <!DOCTYPE HTML>
@@ -234,6 +236,139 @@ Lets look again at our sample set of events and see how JS might schedule work
   </body>
 </html>
 ```
+
+
+## Enter the Ember!
+
+### Things we already know
+
+We have refreshed how Javascript works and we know that your Ember app is JS
+(wow!) so we already know quite a bit about how Ember works:
+
+* Apart from when the code is first found, all Ember framework and application
+  code is run in response to "events" from the browser.
+* The `DOMContentLoaded` event is significant in the life of an Ember app. It tells
+  it that it now has a full DOM to play with so much of the "setup work"
+  (registering for event handlers etc.) happens in response to this event.
+* Your Ember app can schedule its own events by asking the browser to do some work
+  on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
+  alarm clock (e.g. `setTimeout`)
+
+## How ember listens for events
+
+The Ember docs have a list of [events Ember listens for by
+default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names). These
+are 28 the entry points into our code. Anytime Ember does anything it is in response to an event.
+
+Ember registers handlers for these events in the same way you would if you were
+doing it with jQuery.
+
+* It listens to events on only one element in the DOM: `<body>` (or `rootElement` if you specified one)
+* It listens on the normal "bubbling" phase
+* The handler that it registers decides what the Ember response to the event should be.
+
+Implications:
+
+* It is possible and likely to run event handlers _before_ ember runs. Any event handlers you add manually to elements lower down in the DOM tree will be run
+  **before** Ember sees them. Hint: this is a bad idea.
+
+
+TODO: be consistent in use of "listener", "handler" etc.
+
+
+## Where does the framework end an my app begin
+
+How does your Ember _application_ relate to the Ember _framework_?
+The framework listens for events and runs your _application_ code to provide a
+_meaningful_ response.
+
+The machinery for responding to events is part of Ember itself but it does not
+have a meaningful response without application code.
+
+For example if the
+user is on `/#/blog/posts` and clicks a link to go to `/#/authors/shelly` the
+Ember _framework_ will recieve the click event but it won't be able to do anything
+meaningful with it without your _application_ code like
+
+* The Router in your applicaiton tells the framework what Route objects are part
+* of the URL
+* The Route objects themselves
+* lots of other stuff
+
+## Digging deeper into Ember event response
+
+So the pattern of how ember works is have periods of intense activity in
+response to some event and then go back to being idle until the next event
+happens and the browser runs the Ember event handler again.
+
+    [graph of timeline with spaced out chunks of activity]
+
+Lets dig a little deeper into these periods of intense activity.
+
+    [graph of a single chunk from graph above zoomed in to see more detail]
+
+We already know that the first code to get run in reponse to an event is the
+handler function that Ember registered with the browser. What happens after
+that? Lets consider an imaginary example of how a simpler, no runloop Ember
+might respond:
+
+    [explain here the kinds of work that ember does and make it clear that there are
+    natural phases to it]
+    [walk through a simple example showing how it would look if ember just did
+    owrk as it needed to]
+
+We can see from this example that the work can be grouped into just a few
+categories:
+
+1. Bindings need to be synced
+2. ???
+3. Update the DOM (rendering)
+4. Manipulate the new DOM (after rendering)
+
+and we can also see that our _do work as you need it_ approach means that these
+types of work get interleaved. In fact there are some significant downsides to this:
+
+1. It is Inefficent. Every time we changed the DOM in the example above the browser
+did a layout and paint - these are expensive operations which can create a laggy
+UI.
+2. A pain to work with if we want to do stuff with the newly changed DOM. Since
+the rendering happened a little bit at a time it is difficult to know when we
+can safely work with the new state of the DOM .e.g. if we wanted to animate an
+element into view
+
+How might we solve this? How does Ember solve this?
+
+Instead of just doing work as it finds it, Ember schedules the work on an
+internal set of work queues (one for each phase).
+
+When all the work needed to
+respond to the current event has been scheduled it runs the queues in a sensible
+order. Jobs on the queue can add other jobs to the queu.
+
+This is the Ember Runloop.
+
+1. Open the queues for business and start accepting jobs
+2. Close the queues and run all jobs on them. The [Runloop Guide] has an
+excellent visualisaiton of the algorithm works but in brief,
+    * Ember will make sure that all previous queues are empty before moving on to the next one.
+    * If some job
+
+A consequence of this two phase "schedule and execute" approach is that all DOM
+
+TODO: it is not really "two phase" because while flushing the queue existing
+jobs can add work to another queue
+
+
+
+A consequence of this approach is that all DOM rendering happens on one queue.
+It is not correct to say that the Runloop is the "gatekeeper" to all DOM access
+in Ember, rather that "coordinated DOM access" is a pleasant (and deliberate!)
+side-effect of this approach.
+
+This is an important and subtle distinction between the Ember Runloop and
+Angulars "dirty checking" algorithm.
+
+
 
 A discussion of the full timeline (including ember):
 
@@ -279,36 +414,6 @@ definitely get in front of it
 
 We want to play nicely with Ember
 ```
-
-### Enter the Ember!
-
-```
-extend from the discussiona bove
-```
-
-So far so good but no Ember yet!
-
-Ember is basically a set of big event handlers!
-    The ember boot process can be thought of as a handler that runs in response
-    to getting the 'DOMContentLoaded' event from the browser.
-
-Your app is a customisation and extension of these handlers.
-
-TODO: explain how your app relates to ember framework which in turn relates to handling events
-
-Embers work in response to your app has some natural phases to it. Rather than
-just doing work as it appears in the code, ember responds to your app by
-scheduling work on an internal set of work queues (one for each phase) and runs them in
-order. A consequence of this "schedule and execute" approach is that all DOM
-rendering happens on one queue. It is not correct to say that the runloop is the
-"gatekeeper" to the DOM, rather that "coordinated DOM access" is a pleaseant
-(and deliberate!) side-effect of this approach.
-
-This is the runloop.
-
-So the Ember Runloop is *not* solving the exact same problem as Angular dirty
-checking (TODO: Check this!), but they do have some things in common.
-
 
 
 
