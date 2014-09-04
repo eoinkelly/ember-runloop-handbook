@@ -1,4 +1,4 @@
-# Ember JS Runloop Handbook
+# Ember Javascript Runloop Handbook
 
 by [Eoin Kelly](https://twitter.com/eoinkelly)
 
@@ -37,16 +37,39 @@ really understanding what the Runloop is or how it works. However at some point
 you will want to dig in and understand it. It is my sincere hope that this
 handbook can be your guide.
 
+## Naming is hard
+
+As you learn more about the Ember Runloop you will come to understand that,
+well, it just isn't very _loopish_. The name is a bit unfortunate as it
+implies that there is a single instance of the Runloop sitting somewhere in
+memory looping endlessly _running things_. As we will see soon this is not
+true.
+
+In alternate universes the _Runloop_ might have been named
+
+* _Ember Work Queues_
+* _Ember Coordinated Work Algorithm_
+* _Ember Job Scheduler_
+* _Runelope - a large friendly creature that lives in your Javascript VM and
+  manages the work Ember does in response to events._
+
+OK some of those names are terrible (except _Runelope_ of course, that one is pure gold
+and should be immediately pushed to Ember master)
+
+Naming is a hard problem and hindsight is 20/20. The _Runloop_ is what we have
+so that is what we will call it but try not to infer too much about its action
+from the name.
+
 # section: Why Runloop?
 
 ```
 background (the environment ember lives in)
-    JS event loop
+    Javascript event loop
     all about events:
         where they come from
         what they are
-    examples of how vanialla JS handles them
-    show timeline of how vanilla JS responds to events
+    examples of how vanialla Javascript handles them
+    show timeline of how vanilla Javascript responds to events
     show how ember is just a fancy example of handling events
     discuss the ways in which the vanilla approach doesn't scale well if you are doing lots of work
     end with a clear statement of the problems that the runloop solves
@@ -65,7 +88,7 @@ user sees any content or gets a chance to interact with the DOM. Once a script
 is finished executing the Browser never re-runs it.
 
 The browser has a built-in set of _events_ that it it will generate in response
-to actions by the user, the network or its own work.
+to actions by the user, the network or its own work. Some examples of events:
 
 * User moved their mouse (`mousemove`)
 * The DOM has been completely built (`DOMContentLoaded`)
@@ -73,9 +96,9 @@ to actions by the user, the network or its own work.
 * An asset have been loaded on the page (`load`)
 
 
-JS is lazy but well perpared!  During the _setup phase_, JS prepared its work
-space (or _mise en place_ if you prefer) - it creates the objects it will need
-later to respond to orders (events) from the browser and also told the browser
+Javascript is lazy but well perpared!  During the _setup phase_, Javascript prepares its work
+space (or _mise en place_ if you prefer) - it creates the objects it will later need
+ to respond to orders (events) from the browser and also told the browser
 in detail what events it cares about e.g.
 
 > Hey browser, wake me up and run this function I'm giving you whenever the user
@@ -83,15 +106,15 @@ in detail what events it cares about e.g.
 
 The description above makes it look like the browser the one giving all the
 orders but the browser is a team player and has a few things it can do to help
-JS do its job.
+Javascript get the job done:
 
-1. Timers. JS can use the browser like an alarm clock:
+1. Timers. Javascript can use the browser like an alarm clock:
 
-    > Hey browser, wake me up and run this function I'm giving you in 5 seconds please.
+    > Javascript: Hey browser, wake me up and run this function I'm giving you in 5 seconds please.
 
-2. Talking to other systems. If JS needs to send or receive data to other
-computers it asks the browser to do it and the browser promises to wake JS up
-again and report back how it got on
+2. Talking to other systems. If Javascript needs to send or receive data to other
+computers it asks the browser to do it and the browser promises to wake Javascript up
+again when it is finished.
 
     > Javascript: Hey browser, I want to get whatever data is at
     > `http://foo.com/things.json` please.
@@ -108,43 +131,46 @@ again and report back how it got on
 
 We usually refer to this this _talking to other systems_ stuff as Web APIs e.g.
 
-* XHR requests
+* XHR (AJAX) requests
 * Web workers
 * etc.
 
-JS functions are neatly packaged units of work that can be passed around and
-stored so are perfect for this job.
+This communication between browser and Javascript involves a lot of passing
+around _chunks of work_. Javascript functions are neatly packaged units of work
+that can be passed around and stored so are perfect for this job.
 
-JS can use these services of the browser both during its setup phase and while
-responding to another event e.g. part of JS response to a "click" event on a
+Javascript can use these services of the browser both during its setup phase and while
+responding to another event e.g. part of Javascript response to a "click" event on a
 certain element might be to retrieve some data from the network and also
 schedule a timer to do some future work.
 
 We can see a pattern of how javascript does work emerging:
 
 1. In the short _setup phase_ the browser runs each script it finds on the page
-from start to finish. JS uses this as time to do some preparation for next phase.
-2. Responding to events. Many events come from the user but JS can also
-schedule events for itself by using the many services (web APIs) that the
-browser provides.
+from start to finish. Javascript uses this as time to do some preparation for next phase.
+2. Javascript app spends most of of its life _responding to events_. Many events
+come from the user but Javascript can also schedule events for itself by using
+the many services (web APIs) that the browser provides.
 
-Most of a JS applications life is spent in the _responding to events_ phase
-above so a slightly simplified but useful to visualise our app as a _thing which
-is mostly sleeping but when woken by the browser responds quickly to the event
-that woke it before going back to sleep again_.
+If you are unclear about any of this and want to dig a little deeper I recommend
+
+* A [wonderful video by ??? at Scotland JS]() that goes into the
+Javascript event loop in more detail. It is a short watch but has a few diagrams
+that are absolute gold IMHO.
+* TODO some free JS books that cover this material well
 
 ## Enter the Ember!
 
 ### Things we already know
 
-We have refreshed how Javascript works and we know that your Ember app is JS
+We have refreshed how Javascript works and we know that your Ember app is Javascript
 (wow!) so we already know quite a bit about how Ember works:
 
 * Apart from when the code is first found, all Ember framework and application
   code is run in response to "events" from the browser.
 * The `DOMContentLoaded` event is significant in the life of an Ember app. It tells
-  it that it now has a full DOM to play with so much of the "setup work"
-  (registering for event handlers etc.) happens in response to this event.
+  it that it now has a full DOM to play with so Ember will do most of its "setup work"
+  (registering for event listeners etc.) in its response to this event.
 * Your Ember app can schedule its own events by asking the browser to do some work
   on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
   alarm clock (e.g. `setTimeout`)
@@ -159,7 +185,7 @@ it does not have a meaningful response without _application_ code.
 For example if the user is on `/#/blog/posts` and clicks a link to go to
 `/#/authors/shelly` the Ember _framework_ will recieve the click event but it
 won't be able to do anything meaningful with it without some _application_ code
-like:
+e.g.
 
 * A Router map to tell it how to understand the URL
 * The Route objects themselves e.g. BlogRoute, PostsRoute, AuthorsRoute
@@ -175,10 +201,10 @@ are 28 the entry points into our code. Anytime Ember does anything it is in resp
 
 [This]() is a good resource for refreshing your understanding of how DOM events
 work. To get the most of the following discussion you should be familiar with
-how the browser propagates events and how the "capturing" and "bubbling" phase
+how the browser propagates events and how the "capturing" and "bubbling" phases
 work.
 
-Ember registers handlers for those 28 events in the same way you would if you
+Ember registers listeners for those 28 events in the same way you would if you
 were doing it yourself with jQuery. More specifically:
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
@@ -190,35 +216,36 @@ were doing it yourself with jQuery. More specifically:
 It is possible and likely that any event listeners you add manually will run
 _before_ Ember runs. Examples:
 
-* You add a handler to a node deeper in the DOM tree
-* You add a handler to the capturing phase.
+* You add a listener to a node deeper in the DOM tree
+* You add a listener to the capturing phase.
 
 This is a bad thing because Ember assumes that it has complete control over
 whatever portion of DOM you have given it. It will happily create and remove
 nodes within there and won't care if you had event listeners attached.
 
 At best you won't get the intended result of the listener and at worst you get
-the joy of _zombie event listeners_ creating chaos in your nice clean DOM.
-Anybody who has built a Backbone app without Marionnette knows this joy.
+the joy of _zombie event listeners_ creating chaos in your nice clean DOM. (I
+see a few looks of painful recognition from the Backbone devs here)
 
 You might be thinking that you are unlikely to want to add your own listeners
-but this is exactly what will happen if you try to integrate any third party JS
+but this is exactly what will happen if you try to integrate any third party Javascript
 code with your Ember app e.g. a jQuery plugin.
 
-So we have a problem: How can we manually add event listeners to the DOM without
+So we have a problem: How can we add event listeners to the DOM without
 clashing with Ember?
 
 Spoiler alert: The Runloop is part of the solution here but before we understand
-how we need to lay some more groudwork.
+how, we need to lay some more groudwork.
 
 ### Problem: Uncoordinated work
 
-So the pattern of how Ember works is have periods of intense activity in
-response to some event and then go back to being idle until the next event
-happens. Lets dig a little deeper into these periods of intense activity.
+The pattern of how Javascript, therefore Ember, works is periods of intense
+activity in response to some event and then going back to being idle until the
+next event happens. Lets dig a little deeper into these periods of intense
+activity.
 
 We already know that the first code to get run in reponse to an event is the
-handler function that Ember registered with the browser. What happens after
+listener function that Ember registered with the browser. What happens after
 that? Lets consider an imaginary example of how a simpler, _no Runloop_ Ember
 might respond:
 
@@ -234,6 +261,7 @@ categories:
 2. ???
 3. Update the DOM (rendering)
 4. Manipulate the new DOM (after rendering)
+5.
 
 and we can also see that our _do work as you need it_ approach means that these
 types of work get interleaved. This turns out to have are some significant downsides:
@@ -244,13 +272,21 @@ did a layout and paint - these are expensive operations which can create a laggy
 the rendering happened a little bit at a time it is difficult to know when we
 can safely work with the new state of the DOM .e.g. if we wanted to animate an
 element into view.
+3. Because we were just deleting objects as they went out of scope we
+don't really have a good handle on when the browser will decide that it should
+run a _Garbage Collection_ (GC) round.
 
 So we would give our imaginary _no Runloop_ Ember an **A** for effort but a **D**
 for efficency here.
 
 ## Enter the Runloop
 
-How might we solve these problems? How does Ember solve them?
+We have identified two categories of problem
+
+1. Clashing events
+2. Uncoordinated work
+
+How does Ember solve them?
 
 Instead of just doing work as it finds it, Ember schedules the work on an
 internal set of work queues (roughly one for each phase).
@@ -262,6 +298,13 @@ console.log(Ember.run.queues);
 // ["sync", "actions", "routerTransitions", "render", "afterRender", "destroy"]
 ```
 
+x
+
+```
+TODO
+    discuss the kind of stuff that goes on each queue
+```
+
 Each queue corresponds to a "phase of work" identified by the Ember core team.
 This set of queues and the code that manages them is the Ember Runloop. Lets
 look closer at how it works:
@@ -269,11 +312,11 @@ look closer at how it works:
 A _job_ on a queue is just a plain ol' Javascript callback function. _running a
 job_ is simply executing that function.
 
-1. A browser event happens and Embers event handler is triggered.
+1. A browser event happens and Embers event listener function is triggered.
 2. Early on in its response to the event, Ember opens a set of queues and starts
    accepting jobs.
-3. It continues to accept jobs scheduled by Ember (on behalf of your
-   application) as Ember finds them.
+3. As Ember works its way through your application code, it continues to
+schedule jobs on the queues.
 4. Near the end of its response to the event Ember closes the queue-set and starts
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
    though we have closed them to other code. The [Runloop
@@ -362,7 +405,7 @@ complexity of coordinating a complex response quickly gets out of hand.
 2. All application developers an opportuntity to work with the newly changed DOM
 before it is rendered - the `afterRender` queue is the solution to many
 questions! TODO: imporve this
-3. Interface with other JS code that attaches event listeners to the DOM.
+3. Interface with other Javascript code that attaches event listeners to the DOM.
 
 
 
@@ -382,7 +425,7 @@ the API
         which ones do that at some time in the future
 
 when do I _need_ to know about runloop API
-    1. non ember js - show w. timeline how using vanilla JS outside runloop causes problem in ember
+    1. non ember js - show w. timeline how using vanilla Javascript outside runloop causes problem in ember
 
 How is runloop behaviour different in testing?
     explain why auto-run is turned off

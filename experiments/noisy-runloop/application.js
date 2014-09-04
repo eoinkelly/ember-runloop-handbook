@@ -39,24 +39,44 @@ TODO: dig into XHR properly
 */
 
 
-var bb = Ember.run.backburner;
-var oldBegin = bb.begin;
-var oldEnd = bb.end;
+/**
+ * Make the Ember Runloop noisy on the console to help visualise what it is
+ * doing.
+ *
+ * Obviously this will not help performance so
+ * NEVER EVER RUN THIS IN PRODUCTION MMMKAY...
+ *
+ */
 
-window.runLoopId = 0;
+(function () {
+  var bb =        Ember.run.backburner,
+      oldBegin =  bb.begin,
+      oldEnd =    bb.end,
+      runLoopId = 0;
 
-Ember.run.backburner.begin = function () {
-  oldBegin.apply(bb, arguments);
-  bb.currentInstance.__uniqueId = ++window.runLoopId;
-  Ember.debug('Starting runloop: begin():  ' + bb.currentInstance.__uniqueId);
-};
+  Ember.run.backburner.begin = function () {
+    oldBegin.apply(bb, arguments);
+    bb.currentInstance.__uniqueId = ++runLoopId;
+    Ember.debug('Starting runloop: ' + bb.currentInstance.__uniqueId);
+  };
 
-Ember.run.backburner.end= function () {
-  var currentId = bb.currentInstance.__uniqueId;
-  Ember.debug('Ending runloop and starting flush: end();' + currentId);
-  oldEnd.apply(bb, arguments);
-};
+  Ember.run.backburner.end= function () {
+    var currentId = bb.currentInstance.__uniqueId;
+    Ember.debug('Ending & flushing runloop: ' + currentId);
+    oldEnd.apply(bb, arguments);
+  };
 
+
+}());
+
+/**
+ * Tell Ember to stop listening for certain events. These events are very
+ * frequent so they make it harder to visualise what the runloop is doing. Feel
+ * free to adjust this list by adding/removing events. The full list of events
+ * that Ember listens for by default is at
+ * http://emberjs.com/api/classes/Ember.View.html#toc_event-names
+ *
+ */
 
 Ember.Application.initializer({
   name: 'Stop listening for overly noisy mouse events',
@@ -68,6 +88,8 @@ Ember.Application.initializer({
     delete events.mouseleave;
   }
 });
+
+
 
 
 // Start of demo Ember app
@@ -89,6 +111,25 @@ window.Todos = Ember.Application.create({
   //   });
   // }
 });
+
+var old_init = Todos._initialize;
+
+// Ember.run.backburner.instanceStack
+// Ember.run.backburner.currentInstance
+
+function queuesReport (queues) {
+  jQuery.each(queues, function (idx, queue) {
+    var name = queue.name;
+    Ember.debug('Queue ' + name + ' length: ' + queue._queue.length);
+  });
+}
+
+Todos._initialize = function () {
+  Ember.debug('I am _initialize(). I am the callback that the first runloop manages');
+  old_init.apply(Todos, arguments);
+  queuesReport(Ember.run.backburner.currentInstance.queues);
+  Ember.debug('At end of _initialize(). Has extra work been scheduled on the current runloop?');
+};
 
 Todos.Router.map(function() {
     this.resource('todos', { path: '/' });
