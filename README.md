@@ -379,25 +379,110 @@ an event, the fact that DOM access is coordinated is a side-effect of this.
 This is an important and subtle difference in goals between the Ember Runloop
 and things like Angulars _dirty checking_ algorithm.
 
-### Instrumenting the Runloop
 
-show code to instrument it - also have it available in a separate file
+## How often do Runloops happen?
 
-discuss how often runloops happen, how long they last
+From what I have observed, Ember typically runs one Runloop in response to each
+DOM event that it handles.
 
+### Visualising the Runloop for yourself
 
-### Autoruns: a bandaid for non-runloop aware callbacks
+This repo also contains the [noisy runloop kit]() which is trivial demo app and
+a copy of Ember 1.7.0 that I have patched to be very noisy bout what its runloop
+does. Add features to the demo app and see how the actions the runloop takes in
+response in the console. You can also use this version of Ember in your own
+project to visualise what is happening there.
 
+#### Enough with the mousemove already!
+
+When you start getting the Runloop to log its work you will quickly get
+overwhelmed by its running in response to mouse events that happen very
+frequently on desktop browsers e.g. `mousemove`. Below is an initializer for
+Ember that will stop it listening to certain events. You probably want to add
+this to whatever Ember app you are trying to visualise the Runloop for unless
+you are actually _using_ `mousemove`, `mouseenter`, `mouseleave` in your app.
+
+```js
+/**
+ * Tell Ember to stop listening for certain events. These events are very
+ * frequent so they make it harder to visualise what the runloop is doing. Feel
+ * free to adjust this list by adding/removing events. The full list of events
+ * that Ember listens for by default is at
+ * http://emberjs.com/api/classes/Ember.View.html#toc_event-names
+ *
+ */
+
+Ember.Application.initializer({
+  name: 'Stop listening for overly noisy mouse events',
+
+  initialize: function(container, application) {
+    var events = container.lookup('event_dispatcher:main').events;
+    delete events.mousemove;
+    delete events.mouseenter;
+    delete events.mouseleave;
+  }
+});
+```
+
+### Autoruns: what are they
+
+```
 explain what they are
 what problem the solve
 why they should be avoided if possible
 
 
-### The deal
+
+# auto-creating runloops
+
+* if ember detects an event handler running (how???) it opens a runloop and
+  closes it (which actually executes your code) on the next JS event loop turn
+* this is bad because your code does not run in the turn you thought it would
+  and there can be a gap between turns if the browser decides to do GC etc.
+
+
+
+> "Some of Ember's test helpers are promises that wait for the run loop to empty before resolving."
+
+Q: what ember funcs do defer() and deferOnce() map on to???
+
+Ember.backburner.defer() an Ember.backburner.deferOnce will create an
+"autorun" runloop if no runloop is currently open. they call `checkAutoRun()` to
+prevent that this behaviour when `Ember.testing` is set.
+
+
+TODO: investigate this:
+8. `Ember.Test` has its own internal `run()` that will use the normal runloop
+   `run()` if a runloop is open or otherwise just run the provide calback
+   synchronously
+    is this what the docs mean about disabling autoruns in testing ???
+
+
+# auto run methods: createAutorun() and checkAutoRun()
+
+* Ember.backburner.createAutorun()
+    * calls begin() immediately and schedules an end() (using setTimeout) on the very next turn of the event loop
+    * i.e. opens a runloop that will stay open for this turn of the event loop
+    * is only called by `backburner.defer()` and `backburner.deferOnce()`! iff there is not an already open runloop
+        Two places total!
+
+* Ember.backburnder.checkAutoRun()
+    * If there isn't a currently open runloop, it will throw an error if `Ember.testing` is set.
+
+checkAutoRun is called by 3 functions
+Ember.run.
+    schedule()
+    scheduleOnce()
+    once()
+```
+
+### Summary
 
 The downside of the Runloop is that while you don't need to understand it to get
 started making applicaitons with Ember you will eventually have to understand
 it. In exchange for this we get the following benefits:
+
+The runloop does add extra complexity to our Ember projects. In return we get:
 
 1. Have a complex response to events in an efficient and coordinated way. Simple
 event handling but as anybody who has built more ambitious apps with it, the
@@ -406,7 +491,6 @@ complexity of coordinating a complex response quickly gets out of hand.
 before it is rendered - the `afterRender` queue is the solution to many
 questions! TODO: imporve this
 3. Interface with other Javascript code that attaches event listeners to the DOM.
-
 
 
 # Section: How do I use the runloop?

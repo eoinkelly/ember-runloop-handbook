@@ -639,3 +639,42 @@ or implicitly)
 it will return whatever your callback returns
 
 
+# Misc stuff
+
+Will Ember ever run two runloops at the same time (without me using run())?
+
+Aside: The ember inspector triggers 6 extra runloops at startup when it is enabled.
+
+it seems like ember uses EventDispatcher for all events except
+the view compontents for selectbox, textfield etc. register some DOM events of their own
+
+Ember.EventDispatcher handles delegating browser events to their corresponding Ember.Views.
+
+* Ember.Evented
+    * This mixin allows for Ember objects to subscribe to and emit events.
+    * You mix this into vanilla ember object
+    * it provides an interface to stuff in ember-metal/events
+* ember-metal/events
+    * stores events in 'listeners' attribute of the object's meta key: __ember_meta__
+
+Conclusion: I don't think ember listens for any Network events by default e.g.
+it is not aware of XmlHttpRequest, web workers etc.
+
+However RSVP will try to use the most appropraite way of running async code:
+
+```
+if we are in node use proccess.nexttick
+else try browser mutation observers if they exist
+else try to use webworkers message channel
+else use setTimeout
+```
+
+For timer events, ember seems to wrap all that stuff in the Backburner API
+  backburner provides a nicer api (debounce, throttle built-in) and also
+  take care of running stuff within a runloop
+
+
+TODO: dig into XHR properly
+  http://www.w3.org/TR/XMLHttpRequest/#event-xhr-timeout
+
+

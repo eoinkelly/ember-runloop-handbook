@@ -9,18 +9,21 @@
     <!-- Don't autodetect phone number links (iOS) -->
     <meta name="format-detection" content="telephone=no" />
 
-    <title>A test</title>
+    <title>Simple Ember app with noisy runloop</title>
 
-  </head>
-  <body>
-    <script src="node_modules/jquery/dist/jquery.js"></script>
-    <script src="node_modules/handlebars/dist/handlebars.js"></script>
-
-    <!-- <script src="bower_components/ember/ember.js"></script> -->
-    <script src="ember-1.7.0-noisy-runloop.js"></script>
-
+    <script src="js/jquery.js"></script>
+    <script src="js/handlebars.js"></script>
+    <script src="js/ember-1.7.0-noisy-runloop.js"></script>
     <script src="application.js"></script>
-    <link rel="stylesheet" href="style.css"/>
+    <style type="text/css" media="all">
+      .ember-view {
+        outline: 3px solid red;
+      }
+    </style>
+  </head>
+
+  <body>
+
 
 
     <script type="text/x-handlebars" data-template-name="todos">
