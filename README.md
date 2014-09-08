@@ -424,24 +424,33 @@ Ember.Application.initializer({
 });
 ```
 
-### Autoruns: what are they
+### Does Ember wrap my async code in a runloop if I forget? If so how?
 
 ```
-explain what they are
-what problem the solve
-why they should be avoided if possible
+the guide says that ember will wrap any ordinary async calls in a runloop - how?
+    I don't think this really happens!
+
+    The runloop guide says that ember will try to wrap async callbacks in a runloop
+    (http://emberjs.com/guides/understanding-ember/run-loop/#toc_what-happens-if-i-forget-to-start-a-run-loop-in-an-async-handler)
+    but I can't find where this happens within Ember code - can anyone give me any
+    pointers?
+
+    guide says:
+    * if ember detects an event handler running (how???) it opens a runloop and
+    closes it (which actually executes your code) on the next JS event loop turn
+    * this is bad because your code does not run in the turn you thought it would
+    and there can be a gap between turns if the browser decides to do GC etc.
+```
+
+Aside: You really want your runlooop to start and end in a single JS frame
+otherwise the browser might do otherwork if it spans frames e.g. GC
 
 
+### How is Runloop behaviour different when testing?
 
-# auto-creating runloops
+???
 
-* if ember detects an event handler running (how???) it opens a runloop and
-  closes it (which actually executes your code) on the next JS event loop turn
-* this is bad because your code does not run in the turn you thought it would
-  and there can be a gap between turns if the browser decides to do GC etc.
-
-
-
+```
 > "Some of Ember's test helpers are promises that wait for the run loop to empty before resolving."
 
 Q: what ember funcs do defer() and deferOnce() map on to???
@@ -516,6 +525,59 @@ How is runloop behaviour different in testing?
 
 How to use the runloop API
     this is well covered in the guide, refer mostly to it
+```
+
+| Function Name | Runloop (current/next/new) | Queue (default/a name/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
+| ----------------------------- | -------------------------- | -------- | ----------- | ----------- |
+| Ember.run()		            | new | default | always | No |
+| Ember.run.begin()		        | NA | NA | Never | No |
+| Ember.run.end()		        | NA | NA | Never | No |
+| Ember.run.debounce()		    | new | default | always | No |
+| Ember.run.throttle()		    | new | default | always | No |
+| Ember.run.later()		        | future | default | always | Yes |
+| Ember.run.join()		        |
+| Ember.run.bind()		        |
+| Ember.run.currentRunLoop		|
+| Ember.run.sync()		        |
+| Ember.run.schedule()		    | ? | ? | ? | Yes |
+| Ember.run.once()		        | current | `actions` | ? | Yes |
+| Ember.run.scheduleOnce()		| current | any | ? | Yes |
+| Ember.run.next()		        | next |
+| Ember.run.cancelTimers()		| NA | NA | NA | NA |
+| Ember.run.hasScheduledTimers()| NA | NA | NA | NA |
+| Ember.run.cancel(timer)		| NA | NA | NA | NA |
+
+| private functions     |
+| --------------------- |
+| `Ember.run._addQueue()` |
+
+
+The default queue in Ember is `actions`
+
+_NA = not applicable_
+
+```
+The runloop API lets me schedule some funcs with timers
+later()
+schedule()
+scheduleOnce()
+next()
+
+The callback given to any of these goes into embers "timers pool" and are
+eventually run by executeTimers()
+
+executeTimers() calls Ember.run() and within the callback it calls
+Ember.schedule() using the default queue so it
+so the timer functions are saying
+"run this code on the actions queue of a new runloop that I want you to create X
+ms from now. Also run any other functions whose timers expire at the same time
+in that same runloop"
+=> timer funcs let you say that you want it run within a runloop but not which
+runloop! <-- does this need a column in the table: "unknown future runloop"
+
+=> functions executed by timers are wrapped in run() and execute on the default
+queue. You cannot tell when you schedule them exactly which runloop Ember will
+use as it will try to run timers that expire together within the same runloop
 ```
 
 # Appendices

@@ -1,7 +1,8 @@
-# The Ember Runloop
+# Raw Notes on The Ember Runloop
 
-_These are my in progress notes, designed to be read as plain text. Markdown
-formatting here will be crappy_
+_These are my in progress notes, they are frequently incorrect - please don't
+use them for anything as they are incomplete, badly formatted and wrong in
+places._
 
 The tenets of the runloop
     * batch similar work together
