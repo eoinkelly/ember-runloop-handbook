@@ -24,6 +24,41 @@ TODO: dig into .observe() - I think it runs outside the runloop?
 TODO: differentiate in the runloop API which calls create a new runloop and
 which work with an existing one
 
+
+## JS idiom common in the ember code
+
+```js
+
+// # Javascript array splice
+var removedElements = array.splice(index , howManyToRemove[, element1[, ...[, elementN]]])
+
+// * Adds and removes elements to an array
+// * index is negative it counts from end or array
+// * if howManyToRemove is 0, none are removed
+// * it mutates the array in place!
+// * returns an array containing the removed elements.
+// * if no elements are removed an empty array is returned
+// * element1 -> elementN  are the elements to add to the array
+
+
+// # remove & return the last elment off arguments object
+// * pop mutates arguments
+var pop = Array.prototype.pop;
+var pop = [].pop; // alternative
+
+pop.call(arguments);
+// ??? how are they using call() without providing a this argument?
+
+
+var funny = function (a) { return (a + 3); }
+funny(3); // 6
+funny.call({},3); // 6
+funny.call(3); // NaN
+
+So how does this work for pop ???
+```
+
+
 # auto-creating runloops
 
 * if ember detects an event handler running (how???) it opens a runloop and

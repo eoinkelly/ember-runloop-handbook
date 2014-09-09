@@ -527,30 +527,74 @@ How to use the runloop API
     this is well covered in the guide, refer mostly to it
 ```
 
-| Function Name | Runloop (current/next/new) | Queue (default/a name/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
+| Function Name | Runloop (current/next/new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
 | ----------------------------- | -------------------------- | -------- | ----------- | ----------- |
-| Ember.run()		            | new | default | always | No |
-| Ember.run.begin()		        | NA | NA | Never | No |
-| Ember.run.end()		        | NA | NA | Never | No |
-| Ember.run.debounce()		    | new | default | always | No |
-| Ember.run.throttle()		    | new | default | always | No |
-| Ember.run.later()		        | future | default | always | Yes |
-| Ember.run.join()		        |
-| Ember.run.bind()		        |
-| Ember.run.currentRunLoop		|
-| Ember.run.sync()		        |
-| Ember.run.schedule()		    | ? | ? | ? | Yes |
-| Ember.run.once()		        | current | `actions` | ? | Yes |
-| Ember.run.scheduleOnce()		| current | any | ? | Yes |
-| Ember.run.next()		        | next |
-| Ember.run.cancelTimers()		| NA | NA | NA | NA |
-| Ember.run.hasScheduledTimers()| NA | NA | NA | NA |
-| Ember.run.cancel(timer)		| NA | NA | NA | NA |
+| `Ember.run`		            | new | `actions` | Always | No |
+| `Ember.run.debounce`		    | new | `actions` | Always | No |
+| `Ember.run.throttle`		    | new | `actions` | Always | No |
+| `Ember.run.join`		        | current | `actions` | If required | No |
+| `Ember.run.bind`		        | current | `actions` | If required | No |
 
-| private functions     |
-| --------------------- |
-| `Ember.run._addQueue()` |
+| `Ember.run.later`		        | future | `actions` | If required | Yes |
+| `Ember.run.schedule`		    | Current | chosen by param | If required | Yes |
+| `Ember.run.scheduleOnce`		| current | chosen by param| If required | Yes |
+| `Ember.run.next`		        | future | `actions` | If required | Yes |
+| `Ember.run.once`		        | current | `actions` | If required | Yes |
 
+| `Ember.run.cancelTimers`		| NA | NA | NA | NA |
+| `Ember.run.hasScheduledTimers`| NA | NA | NA | NA |
+| `Ember.run.cancel`		    | NA | NA | NA | NA |
+
+| `Ember.run.begin`		        | NA | NA | Never | No |
+| `Ember.run.end`		        | NA | NA | Never | No |
+
+| `Ember.run.sync`		        | NA | NA | NA | NA |
+
+```
+TODO: add some category columns to above to e.g.
+    runs in current turn of JS event loop
+    Uses timers array
+    Will share with runloop started implicitly by response to event
+
+3 timer management functions
+5 functions that let you run a callback in the future
+2 low-level manual runloop control functions
+1 convenience function for forcing bindings to settle
+
+executing a callback you give to one of the 5 "timer runner" functions will
+create a new runloop if there isn't
+
+Q: will a timer function share an already open ember runloop or always create its own
+    * When is my call to Ember.run.* is discovered by Ember????
+    * do the timer functions always use Ember.run ????
+```
+
+* Ember.run.debounce
+    * calls Ember.backburner.debounce
+* Ember.run.bind()
+    * Takes the given callback and passes it to `Ember.run.join()`
+
+* Ember.run.sync()
+    * Immediately flush the `sync` queue.
+    * aka "force all bindings to sync right now"
+    * Ember does not use this internallly
+
+* `Ember.run.schedule`
+    * calls CheckAutoRun()
+    * Then calls Ember.backburner.schedule aka Ember.backburner.defer
+
+* Ember.run.once
+    * same as calling `scheduleOnce` with the "actions" queue.
+
+* Ember.run.scheduleOnce
+    * Calls Ember.backburner.scheduleOnce aka Ember.backburner.deferOnce
+
+* Ember.run.next
+    * Calls Ember.backburner.later aka Ember.backburner.setTimeout
+    * puts the callback at the start of the timers queue
+
+* Ember.run.currentRunLoop
+    * Reference to the current runloop
 
 The default queue in Ember is `actions`
 
@@ -578,6 +622,21 @@ runloop! <-- does this need a column in the table: "unknown future runloop"
 => functions executed by timers are wrapped in run() and execute on the default
 queue. You cannot tell when you schedule them exactly which runloop Ember will
 use as it will try to run timers that expire together within the same runloop
+
+timers is an array of pairs:
+timers = [<timestamp>, <callback>, <timestamp>, <callback> ... ]
+
+
+_laterTimer is a variable that holds a timerout value that is used to schedule
+the running of executeTimers() executeTimers() is what actually runs the callbacks)
+
+_laterTimerExpiresAt
+???
+
+executeTimers()
+
+    runs:
+        self.schedule(self.options.defaultQueue, null, fns[i]);
 ```
 
 # Appendices
