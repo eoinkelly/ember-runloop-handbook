@@ -50,12 +50,20 @@ pop.call(arguments);
 // ??? how are they using call() without providing a this argument?
 
 
+```
+
+x
+
+```
 var funny = function (a) { return (a + 3); }
 funny(3); // 6
 funny.call({},3); // 6
-funny.call(3); // NaN
+funny.call(3); // NaN (as expected)
 
-So how does this work for pop ???
+var xs = [1,2,3]
+var pop = Array.prototype.pop;
+pop.call(xs); // 3 // Why does this work ...
+pop.call({}, xs); // undefined // ... but this does not?
 ```
 
 

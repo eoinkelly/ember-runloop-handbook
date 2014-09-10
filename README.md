@@ -527,7 +527,7 @@ How to use the runloop API
     this is well covered in the guide, refer mostly to it
 ```
 
-| Function Name | Runloop (current/next/new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
+| Function Name | Runloop (current/future/new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
 | ----------------------------- | -------------------------- | -------- | ----------- | ----------- |
 | `Ember.run`		            | new | `actions` | Always | No |
 | `Ember.run.debounce`		    | new | `actions` | Always | No |
@@ -550,11 +550,20 @@ How to use the runloop API
 
 | `Ember.run.sync`		        | NA | NA | NA | NA |
 
+
+Legend:
+
+* future = some runloop in the future
+* The default queue in Ember is `actions`
+* NA = not applicable
+
 ```
 TODO: add some category columns to above to e.g.
     runs in current turn of JS event loop
-    Uses timers array
+    puts its callback arg onto timers array
     Will share with runloop started implicitly by response to event
+
+API overview:
 
 3 timer management functions
 5 functions that let you run a callback in the future
@@ -567,7 +576,25 @@ create a new runloop if there isn't
 Q: will a timer function share an already open ember runloop or always create its own
     * When is my call to Ember.run.* is discovered by Ember????
     * do the timer functions always use Ember.run ????
+
+    anything that uses Ember.run will always create its own loop
 ```
+
+
+```
+This section is a bit confused: what am I trying to achieve here?
+
+
+    QUESTION: do I want to explain each API function?
+        - docs already do it
+    CONCLUSION: In this seciton I want to
+        point out different groupings of API function
+        discuss each grouping
+
+    TODO: it would be cool to show how they use each other internally as some sort of
+    graph - try this on paper as a first draft
+
+    TODO: move these to my raw notes unless i can figure out a plan for them
 
 * Ember.run.debounce
     * calls Ember.backburner.debounce
@@ -595,48 +622,84 @@ Q: will a timer function share an already open ember runloop or always create it
 
 * Ember.run.currentRunLoop
     * Reference to the current runloop
+```
 
-The default queue in Ember is `actions`
+### Ember and future work
 
-_NA = not applicable_
+There are X functions in the Runloop API let us schedule "future work":
+
+1. `Ember.run.later`
+2. `Ember.run.schedule`
+3. `Ember.run.scheduleOnce`
+4. `Ember.run.next`
+5. `Ember.run.once`
+
+Each of these X API functions is a way of expressing _when_ you would like work
+(a callback function) to happen. The garuantee provided by the Runloop is that
+it will also manage the other work that results from running that function. It
+does not garuantee anything else!
+
+The key points:
+
+* Ember keeps an internal queue of "future work" in the form of an array of
+  timestamp and function pairs e.g.
+    ```
+    [1410373997044, function fn() {..}, 1410373997048, function fn() {..}, 1410373997052, function fn() {..}]
+    // or in pseudo code:
+    [(timestamp, fn), (timestamp, fn) ... ]
+    ```
+* It uses this queue to manage _work you have asked it to do but not on the current runloop_
+* Each of the API functions above is a different way of adding a (timestamp,
+  callback) pair to this array.
+* Ember does now know **exactly** when it will get a chance to execute this future
+  work (Javascript might be busy doing something else)
+* Each time it checks for future it executes all the functions whose timestamps are in the past
+* So the X API functions are creative in their creation of timestamps to achieve what they want.
+* When Ember does find some pairs on the _future work queue_ that should be
+  executed it creates a new runloop for those functions (using `Ember.run`) and
+  schedules each function onto the `actions` queue.
+
+Consequences:
+
+* When you give a function to one of the _Future work_ API functions you cannot
+  know which Runloop it will run in.
+    * It may share a runloop iwth other _future work_ functions
+    * It will only every share with other functions from the _future work queue_
+      - it will not share a runloop with other Ember code or anything you
+      explicitly pass to `Ember.run` yourself
+* You can only put _future work_ on the `actions` queue so if you need to run
+  something on a future `afterRender` queue you need to schedule it from within
+  the function you gave the _future work_ API (TODO: terrbile sentence)
+* _future work_ APIs let you specify _some_ future runloop but not exactly which
+  one.
 
 ```
-The runloop API lets me schedule some funcs with timers
-later()
-schedule()
-scheduleOnce()
-next()
+"run any other functions whose timers expire at a similar time in that same runloop"
 
-The callback given to any of these goes into embers "timers pool" and are
-eventually run by executeTimers()
+TODO: I *think* that the timers loop just runs functions whose timestamps have
+expired - this is how ember implements that "timers which expire at similar
+times" stuff.
 
-executeTimers() calls Ember.run() and within the callback it calls
-Ember.schedule() using the default queue so it
-so the timer functions are saying
-"run this code on the actions queue of a new runloop that I want you to create X
-ms from now. Also run any other functions whose timers expire at the same time
-in that same runloop"
-=> timer funcs let you say that you want it run within a runloop but not which
-runloop! <-- does this need a column in the table: "unknown future runloop"
+QUESTION: how does ember check for work on the timers array?
+    ANSWER: ???
+    _laterTimer is a variable that holds a timerout value that is used to schedule
+    the running of executeTimers() executeTimers() is what actually runs the callbacks)
 
-=> functions executed by timers are wrapped in run() and execute on the default
-queue. You cannot tell when you schedule them exactly which runloop Ember will
-use as it will try to run timers that expire together within the same runloop
+    _laterTimerExpiresAt
+    ???
 
-timers is an array of pairs:
-timers = [<timestamp>, <callback>, <timestamp>, <callback> ... ]
+searchTimers()
+* this func is repsonsible for deciding what timers have expired and should be
+  added to the new runloop
 
 
-_laterTimer is a variable that holds a timerout value that is used to schedule
-the running of executeTimers() executeTimers() is what actually runs the callbacks)
+debounce, throttle use window.setTimeout and call Ember.run
+so they do not use the "timer queues" mechanism at all
+=> they are a separate strand of "future work"
 
-_laterTimerExpiresAt
-???
+need to separate these somehow
+=> perhaps ember has _queued future work_ and _future work_
 
-executeTimers()
-
-    runs:
-        self.schedule(self.options.defaultQueue, null, fns[i]);
 ```
 
 # Appendices
