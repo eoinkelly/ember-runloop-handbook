@@ -4,19 +4,19 @@ by [Eoin Kelly](https://twitter.com/eoinkelly)
 
 ![Creative Commons License](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)
 
-## Current status: Such incomplete, much TODO.
+### Current status
 
-`TODO: remove this when complete`
-
+```
 Very much a work in progress. Currently still compiling my notes and researching
 topics.
+```
 
-## Contributing
+### Contributing
 
 You should. :-). If you spot any of the (inevitable) errors, omissions, things
 which are unclear you would be doing me a great favour by opening an issue.
 
-# Section: Introduction
+# Introduction
 
 We are about to take a deep dive into the Ember.js runloop. Why? Because
 eventually you need to. Together we will answer these questions:
@@ -27,15 +27,17 @@ eventually you need to. Together we will answer these questions:
 
 This is not reference documentation - the [Ember API
 docs](http://emberjs.com/api/) have that nicely covered. This isn't even the
-_I'm a pretty experienced dev, just give me the concepts in a succinct way_
+_"I'm an experienced dev, just give me the concepts in a succinct way"_
 documentation - the [Official Ember Run-loop
 guide](http://emberjs.com/guides/understanding-ember/run-loop/) has that
 covered. This is a longer, more detailed look at the Runloop.
 
-The good news is that you get started with Ember Application development without
-really understanding what the Runloop is or how it works. However at some point
-you will want to dig in and understand it. It is my sincere hope that this
-handbook can be your guide.
+You get started with Ember application development without understanding the
+Runloop. However at some point you will want to dig in and understand it
+properly so you can use it skillfully. It is my sincere hope that this handbook
+can be your guide.
+
+Let's begin.
 
 ## Naming is hard
 
@@ -53,12 +55,11 @@ In alternate universes the _Runloop_ might have been named
 * _Runelope - a large friendly creature that lives in your Javascript VM and
   manages the work Ember does in response to events._
 
-OK some of those names are terrible (except _Runelope_ of course, that one is pure gold
-and should be immediately pushed to Ember master)
-
-Naming is a hard problem and hindsight is 20/20. The _Runloop_ is what we have
-so that is what we will call it but try not to infer too much about its action
-from the name.
+OK so some of those names are really terrible (except _Runelope_ of course, that
+one is pure gold and should be immediately pushed to Ember master). Naming is a
+hard problem and hindsight is 20/20. The _Runloop_ is what we have so that is
+what we will call it but try not to infer too much about its action from the
+name.
 
 # section: Why Runloop?
 
@@ -77,24 +78,29 @@ background (the environment ember lives in)
 
 ## Background
 
-Lets set the scene by reviewing a few fundementals about how Javascript runs.
+On our journey to understand the Runloop we must first understand the
+environment it lives in and the problems it is trying to solve.  Lets set the
+scene by refreshing our brains with a few fundementals about how Javascript
+runs. (If you are an experienced Javascript developer you may want to just
+skim/skip this.)
 
-While parsing your HTML the browser executes each `<script>` element that it
-finds *as it finds them*. This is a slightly simplified description of how this works but good enough for
-us today. [Check out the full story.]()
+The browser makes request and server sends HTML back as a response.
 
-We will call this the _setup phase_. This _setup phase_ happens well before the
-user sees any content or gets a chance to interact with the DOM. Once a script
-is finished executing the Browser never re-runs it.
+The browser then parses the HTML and every time it finds a script it executes it
+immediately(*) Lets call this the _setup phase_.  This _setup phase_ happens
+well before the user sees any content or gets a chance to interact with the DOM.
+Once a script is finished executing the Browser never re-runs it.
 
-The browser has a built-in set of _events_ that it it will generate in response
-to actions by the user, the network or its own work. Some examples of events:
+(*) Things like `defer` tweak this somewhat but this is a useful simplification.
+
+
+The browser watches for actions by the user, the network and some internal
+timers and will send _events_ to Javascript in response e.g.
 
 * User moved their mouse (`mousemove`)
 * The DOM has been completely built (`DOMContentLoaded`)
 * User clicked on something (`mousedown`, `mouseup`, `click`)
 * An asset have been loaded on the page (`load`)
-
 
 Javascript is lazy but well perpared!  During the _setup phase_, Javascript prepares its work
 space (or _mise en place_ if you prefer) - it creates the objects it will later need
@@ -144,7 +150,7 @@ responding to another event e.g. part of Javascript response to a "click" event 
 certain element might be to retrieve some data from the network and also
 schedule a timer to do some future work.
 
-We can see a pattern of how javascript does work emerging:
+We can see the pattern of how javascript does work emerging:
 
 1. In the short _setup phase_ the browser runs each script it finds on the page
 from start to finish. Javascript uses this as time to do some preparation for next phase.
@@ -152,35 +158,32 @@ from start to finish. Javascript uses this as time to do some preparation for ne
 come from the user but Javascript can also schedule events for itself by using
 the many services (web APIs) that the browser provides.
 
-If you are unclear about any of this and want to dig a little deeper I recommend
+A solid understanding of this stuff is required to understand the Runloop so if
+you are unclear about any of this and want to dig a little deeper I recommend a
+[wonderful video by Philip Roberts at Scotland JS](http://vimeo.com/96425312)
+that goes into the Javascript event loop in more detail. It is a short watch but
+has a few diagrams that are absolute gold IMHO.
 
-* A [wonderful video by ??? at Scotland JS]() that goes into the
-Javascript event loop in more detail. It is a short watch but has a few diagrams
-that are absolute gold IMHO.
-* TODO some free JS books that cover this material well
-
-## Enter the Ember!
+# Enter the Ember!
 
 ### Things we already know
 
-We have refreshed how Javascript works and we know that your Ember app is Javascript
-(wow!) so we already know quite a bit about how Ember works:
+Since Ember is Javascript we already know quite a bit about how Ember works:
 
 * Apart from when the code is first found, all Ember framework and application
   code is run in response to "events" from the browser.
 * The `DOMContentLoaded` event is significant in the life of an Ember app. It tells
-  it that it now has a full DOM to play with so Ember will do most of its "setup work"
-  (registering for event listeners etc.) in its response to this event.
+  it that it now has a full DOM to play with. Ember will do most of its "setup work"
+  (registering for event listeners etc.) in response to this event.
 * Your Ember app can schedule its own events by asking the browser to do some work
   on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
   alarm clock (e.g. `setTimeout`)
 
 ### Where does the framework end an my app begin
 
-How does your Ember _application_ relate to the Ember _framework_?
-
-The machinery for responding to events is part of Ember _framework_ itself but
-it does not have a meaningful response without _application_ code.
+How does your Ember _application_ relate to the Ember _framework_? The machinery
+for responding to events is part of Ember _framework_ itself but it does not
+have a meaningful response without _application_ code.
 
 For example if the user is on `/#/blog/posts` and clicks a link to go to
 `/#/authors/shelly` the Ember _framework_ will recieve the click event but it
@@ -195,7 +198,8 @@ e.g.
 
 The Ember docs have a list of [events Ember listens for by
 default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names). These
-are 28 the entry points into our code. Anytime Ember does anything it is in response to an event.
+are 28 the entry points into our code. **Anytime Ember does anything it is in
+response to an event.**
 
 ### How ember listens for events
 
@@ -204,19 +208,23 @@ work. To get the most of the following discussion you should be familiar with
 how the browser propagates events and how the "capturing" and "bubbling" phases
 work.
 
-Ember registers listeners for those 28 events in the same way you would if you
-were doing it yourself with jQuery. More specifically:
+Ember registers listeners for those 28 events similarly to how we might do it
+ourselves with jQuery.  More specifically:
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
 * This element is `<body>` unless your application specifies a `rootElement`
-* Ember attaches listeners to the normal "bubbling" phase.
+* Ember attaches its listeners to the "bubbling" phase.
 
-### Problem: Clashing events
+## Problems
+
+What are the problems that the Runloop solves?
+
+### Problem #1 - Clashing events
 
 It is possible and likely that any event listeners you add manually will run
 _before_ Ember runs. Examples:
 
-* You add a listener to a node deeper in the DOM tree
+* You add a listener to a node deeper in the DOM tree than `<body>`
 * You add a listener to the capturing phase.
 
 This is a bad thing because Ember assumes that it has complete control over
@@ -231,13 +239,10 @@ You might be thinking that you are unlikely to want to add your own listeners
 but this is exactly what will happen if you try to integrate any third party Javascript
 code with your Ember app e.g. a jQuery plugin.
 
-So we have a problem: How can we add event listeners to the DOM without
+So we have a problem: How can we add event our own listeners to the DOM without
 clashing with Ember?
 
-Spoiler alert: The Runloop is part of the solution here but before we understand
-how, we need to lay some more groudwork.
-
-### Problem: Uncoordinated work
+### Problem #2 - Uncoordinated work
 
 The pattern of how Javascript, therefore Ember, works is periods of intense
 activity in response to some event and then going back to being idle until the
@@ -263,18 +268,18 @@ categories:
 4. Manipulate the new DOM (after rendering)
 5.
 
-and we can also see that our _do work as you need it_ approach means that these
-types of work get interleaved. This turns out to have are some significant downsides:
+Our _do work as you need it_ approach means that these types of work are
+interleaved. This has some significant downsides:
 
 1. It is inefficent. Every time we changed the DOM in the example above the browser
-did a layout and paint - these are expensive operations which can create a laggy UI.
-2. It is arkwward to work with if we want to do stuff with the newly changed DOM. Since
-the rendering happened a little bit at a time it is difficult to know when we
-can safely work with the new state of the DOM .e.g. if we wanted to animate an
-element into view.
+did a layout and paint - these are expensive operations that we did more often
+than we needed to.
+2. Difficult to know when all DOM changes have happened. The rendering happened
+a little bit at a time it is difficult to know when we can safely work with the
+new state of the DOM .e.g. if we wanted to animate an element into view.
 3. Because we were just deleting objects as they went out of scope we
 don't really have a good handle on when the browser will decide that it should
-run a _Garbage Collection_ (GC) round.
+run garbage collection.
 
 So we would give our imaginary _no Runloop_ Ember an **A** for effort but a **D**
 for efficency here.
@@ -286,47 +291,40 @@ We have identified two categories of problem
 1. Clashing events
 2. Uncoordinated work
 
-How does Ember solve them?
-
-Instead of just doing work as it finds it, Ember schedules the work on an
-internal set of work queues (roughly one for each phase).
-
-By default Ember has six queues:
+How does Ember solve them? Instead of just doing work as it finds it, Ember
+schedules the work on an internal set of queues. By default Ember has six queues:
 
 ```js
 console.log(Ember.run.queues);
 // ["sync", "actions", "routerTransitions", "render", "afterRender", "destroy"]
 ```
 
-x
-
-```
-TODO
-    discuss the kind of stuff that goes on each queue
-```
+You can see a summary of the intent of each queue in the [Runloop
+Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
+but today we are going to focus on the queues themselves.
 
 Each queue corresponds to a "phase of work" identified by the Ember core team.
-This set of queues and the code that manages them is the Ember Runloop. Lets
+This set of queues and the code that manages them **is** the Ember Runloop. Lets
 look closer at how it works:
 
-A _job_ on a queue is just a plain ol' Javascript callback function. _running a
+A _job_ on a queue is just a plain ol' Javascript callback function. _Running a
 job_ is simply executing that function.
 
 1. A browser event happens and Embers event listener function is triggered.
-2. Early on in its response to the event, Ember opens a set of queues and starts
+1. Early on in its response to the event, Ember opens a set of queues and starts
    accepting jobs.
-3. As Ember works its way through your application code, it continues to
+1. As Ember works its way through your application code, it continues to
 schedule jobs on the queues.
-4. Near the end of its response to the event Ember closes the queue-set and starts
+1. Near the end of its response to the event Ember closes the queue-set and starts
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
    though we have closed them to other code. The [Runloop
    Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
    has an excellent visualisaiton of the algorithm works but in brief:
     1. Scan the queues array, starting at the first until you find a job. Finish if all queues are empty.
-    2. Run the job (aka execute the callback function)
-    3. Go to step 1
+    1. Run the job (aka execute the callback function)
+    1. Go to step 1
 
-Lets consider some subtle consequences of this simple algorightm:
+Lets consider some subtle consequences of this simple algorihtm:
 
 * Ember does a full queue scan after each *job* - it does not attempt to finish
   a full queue before checking for earlier work.
@@ -350,7 +348,7 @@ Lets consider some subtle consequences of this simple algorightm:
     doing any jobs that result from those jobs - Ember is a pretty great
     employee to have working for you!
 
-And there there are some things which are not obvious:
+There are also some things which are not obvious:
 
 There is no "singleton" Runloop. This is confusing because documentation uses
 the phrase "the Runloop" to refer to the whole system but it is important to
@@ -360,38 +358,33 @@ which is a singleton). There is no "the" Runloop, instead there can
 be multiple instances of "a runloop". It is true that Ember will usually only
 create one runloop per DOM event but this is not always the case. For example:
 
-* When you use [Ember.run()]() API (see below) you will be creating your own
-* Runloop that may go through its full lifecycle while the runloop that
-    Ember uses is still accepting jobs.
+* When you use `Ember.run` (see below) you will be creating your own
+  Runloop that may go through its full lifecycle while the runloop thatEmber
+  uses is still accepting jobs.
 * Usually Ember application will boot within a single runloop but if you
-    enable the [Ember Inspector]() then many more runloops happen at boot
-    time.
+  enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
 
 Another consequence of the runloop not being a singleton it that it does not
 function as a "global gateway" to DOM access for the Ember app. It is not
 correct to say that the Runloop is the "gatekeeper" to all DOM access in Ember,
 rather that "coordinated DOM access" is a pleasant (and deliberate!) side-effect
-of this approach. As mentioned above, multiple Runloops can exist simultaneously
-so there is not garuantee that *all* DOM access will happen at one time.
-
-The Ember Runloop has the goal of organising *all* the work done in response to
-an event, the fact that DOM access is coordinated is a side-effect of this.
-This is an important and subtle difference in goals between the Ember Runloop
-and things like Angulars _dirty checking_ algorithm.
-
+of organising all the work done in response to an event.. As mentioned above,
+multiple Runloops can exist simultaneously so there is not guarantee that *all*
+DOM access will happen at one time.
 
 ## How often do Runloops happen?
 
 From what I have observed, Ember typically runs one Runloop in response to each
 DOM event that it handles.
 
-### Visualising the Runloop for yourself
+#### Visualising the Runloop for yourself
 
 This repo also contains the [noisy runloop kit]() which is trivial demo app and
-a copy of Ember 1.7.0 that I have patched to be very noisy bout what its runloop
-does. Add features to the demo app and see how the actions the runloop takes in
-response in the console. You can also use this version of Ember in your own
-project to visualise what is happening there.
+a copy of Ember that I have patched to be very noisy about what its runloop
+does. You can add features to the demo app and see how the actions the runloop takes in
+response in the console. You can also use the included version of Ember in your own
+project to visualise what is happening there. Obviously you should only include
+this in development because it will slow the Runloop down.
 
 #### Enough with the mousemove already!
 
@@ -427,6 +420,8 @@ Ember.Application.initializer({
 ### Does Ember wrap my async code in a runloop if I forget? If so how?
 
 ```
+STATUS: INCOMPLETE
+
 the guide says that ember will wrap any ordinary async calls in a runloop - how?
     I don't think this really happens!
 
@@ -448,9 +443,9 @@ otherwise the browser might do otherwork if it spans frames e.g. GC
 
 ### How is Runloop behaviour different when testing?
 
-???
-
 ```
+STATUS: INCOMPLETE
+
 > "Some of Ember's test helpers are promises that wait for the run loop to empty before resolving."
 
 Q: what ember funcs do defer() and deferOnce() map on to???
@@ -487,67 +482,33 @@ Ember.run.
 
 ### Summary
 
-The downside of the Runloop is that while you don't need to understand it to get
-started making applicaitons with Ember you will eventually have to understand
-it. In exchange for this we get the following benefits:
+You don't need to understand the Runloop to get started making applicaitons with
+Ember you will eventually have to understand it. In exchange for this we get the
+following benefits:
 
-The runloop does add extra complexity to our Ember projects. In return we get:
+1. We can have a complex response to events in an efficient and coordinated way.
+The standard Javascript tooling for handling events works well but the
+complexity of coordinating a complex event response quickly gets out of hand in
+large apps.
+2. We can insert our own work into know points in this coordinated repsonse.
 
-1. Have a complex response to events in an efficient and coordinated way. Simple
-event handling but as anybody who has built more ambitious apps with it, the
-complexity of coordinating a complex response quickly gets out of hand.
-2. All application developers an opportuntity to work with the newly changed DOM
-before it is rendered - the `afterRender` queue is the solution to many
-questions! TODO: imporve this
-3. Interface with other Javascript code that attaches event listeners to the DOM.
+# How do I use the runloop?
 
-
-# Section: How do I use the runloop?
-
-```
-this section is deisgned to be an primer for the API docs
-
-TODO: re-read the run loopguide before I write this so I don't overlap too much.
-
-the API
-    give a high-level overview, help people mentally categorise it
-    what are the main categories of methods
-        which ones create new runloops
-        which ones assume an existing one
-        which ones perform a runloop cycle synchronously
-        which ones do that at some time in the future
-
-when do I _need_ to know about runloop API
-    1. non ember js - show w. timeline how using vanilla Javascript outside runloop causes problem in ember
-
-How is runloop behaviour different in testing?
-    explain why auto-run is turned off
-
-How to use the runloop API
-    this is well covered in the guide, refer mostly to it
-```
-
-| Function Name | Runloop (current/future/new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
+| Function Name | Runloop (current/future/always-new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
 | ----------------------------- | -------------------------- | -------- | ----------- | ----------- |
-| `Ember.run`		            | new | `actions` | Always | No |
-| `Ember.run.debounce`		    | new | `actions` | Always | No |
-| `Ember.run.throttle`		    | new | `actions` | Always | No |
+| `Ember.run`		            | always-new | `actions` | Always | No |
+| `Ember.run.debounce`		    | always-new | `actions` | Always | No |
+| `Ember.run.throttle`		    | always-new | `actions` | Always | No |
 | `Ember.run.join`		        | current | `actions` | If required | No |
 | `Ember.run.bind`		        | current | `actions` | If required | No |
-
-| `Ember.run.later`		        | future | `actions` | If required | Yes |
-| `Ember.run.schedule`		    | Current | chosen by param | If required | Yes |
+| `Ember.run.schedule`		    | current | chosen by param | If required | Yes |
 | `Ember.run.scheduleOnce`		| current | chosen by param| If required | Yes |
+| `Ember.run.later`		        | future | `actions` | If required | Yes |
 | `Ember.run.next`		        | future | `actions` | If required | Yes |
 | `Ember.run.once`		        | current | `actions` | If required | Yes |
-
-| `Ember.run.cancelTimers`		| NA | NA | NA | NA |
-| `Ember.run.hasScheduledTimers`| NA | NA | NA | NA |
-| `Ember.run.cancel`		    | NA | NA | NA | NA |
-
 | `Ember.run.begin`		        | NA | NA | Never | No |
 | `Ember.run.end`		        | NA | NA | Never | No |
-
+| `Ember.run.cancel`		    | NA | NA | NA | NA |
 | `Ember.run.sync`		        | NA | NA | NA | NA |
 
 
@@ -581,60 +542,15 @@ Q: will a timer function share an already open ember runloop or always create it
 ```
 
 
-```
-This section is a bit confused: what am I trying to achieve here?
-
-
-    QUESTION: do I want to explain each API function?
-        - docs already do it
-    CONCLUSION: In this seciton I want to
-        point out different groupings of API function
-        discuss each grouping
-
-    TODO: it would be cool to show how they use each other internally as some sort of
-    graph - try this on paper as a first draft
-
-    TODO: move these to my raw notes unless i can figure out a plan for them
-
-* Ember.run.debounce
-    * calls Ember.backburner.debounce
-* Ember.run.bind()
-    * Takes the given callback and passes it to `Ember.run.join()`
-
-* Ember.run.sync()
-    * Immediately flush the `sync` queue.
-    * aka "force all bindings to sync right now"
-    * Ember does not use this internallly
-
-* `Ember.run.schedule`
-    * calls CheckAutoRun()
-    * Then calls Ember.backburner.schedule aka Ember.backburner.defer
-
-* Ember.run.once
-    * same as calling `scheduleOnce` with the "actions" queue.
-
-* Ember.run.scheduleOnce
-    * Calls Ember.backburner.scheduleOnce aka Ember.backburner.deferOnce
-
-* Ember.run.next
-    * Calls Ember.backburner.later aka Ember.backburner.setTimeout
-    * puts the callback at the start of the timers queue
-
-* Ember.run.currentRunLoop
-    * Reference to the current runloop
-```
-
 ### Ember and future work
 
-There are X functions in the Runloop API let us schedule "future work":
+There are 3 functions in the Runloop API let us schedule "future work":
 
 1. `Ember.run.later`
-2. `Ember.run.schedule`
-3. `Ember.run.scheduleOnce`
-4. `Ember.run.next`
-5. `Ember.run.once`
+1. `Ember.run.next`
+1. `Ember.run.once`
 
-Each of these X API functions is a way of expressing _when_ you would like work
+Each of these API functions is a way of expressing _when_ you would like work
 (a callback function) to happen. The garuantee provided by the Runloop is that
 it will also manage the other work that results from running that function. It
 does not garuantee anything else!
@@ -697,9 +613,43 @@ debounce, throttle use window.setTimeout and call Ember.run
 so they do not use the "timer queues" mechanism at all
 => they are a separate strand of "future work"
 
+throttle and debounce are a a thing on their own
+    when they do decide to run the callback they wrap it in `Ember.run`
+    => the method will get **a runloop just for itself**
+
+ember maintains an internal lists of "throttlers" and "debouncees"
+
 need to separate these somehow
 => perhaps ember has _queued future work_ and _future work_
 
+
+diff between throttle and debounce?
+
+throttle (target, method, args*, spacing, immediate = true)
+    * target method is run on leading edge of spacing period if immediate == true
+    * no matter how many calls to throttle(same args) come in, Ember will run at
+      most one per 'spacing' ms
+
+debounce (target, method, args*, wait, immediate = false)
+    * delay calling the method until we get a 'wait' amount of time with no
+      calls to debounce
+    * use it when you have an event that will be called multiple times but you
+      only want to run a callback once when the event is *finished* e.g. run a
+      callback when a user finishes scrolling
+    * immediate allows you to call the method immediately and then start waiting
+      this lets you
+    * for a 'wait' lenght period without any calls to the method - this lets
+    * 'wait' is the amount of time Ember should remember this call for - after
+    * that time has expired Ember will forget about it
+
+    "I want to call this method once now and ignore all future calls to it until
+    there has been a peiod of 'wait' ms with no call to it. Once that has
+    happened you can stop ignoring it and call it again"
+
+    * Use debounce when an event may fire many times over a brief period of time
+    * e.g. scroll and you only want to run one callback in response - use
+    * 'immediate' to control whether the callback is run at the start of the
+    * "event storm" or at the end
 ```
 
 # Appendices

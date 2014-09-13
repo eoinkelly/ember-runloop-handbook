@@ -722,3 +722,46 @@ TODO: dig into XHR properly
   http://www.w3.org/TR/XMLHttpRequest/#event-xhr-timeout
 
 
+```
+This section is a bit confused: what am I trying to achieve here?
+
+
+    QUESTION: do I want to explain each API function?
+        - docs already do it
+    CONCLUSION: In this seciton I want to
+        point out different groupings of API function
+        discuss each grouping
+
+    TODO: it would be cool to show how they use each other internally as some sort of
+    graph - try this on paper as a first draft
+
+    TODO: move these to my raw notes unless i can figure out a plan for them
+
+* Ember.run.debounce
+    * calls Ember.backburner.debounce
+* Ember.run.bind()
+    * Takes the given callback and passes it to `Ember.run.join()`
+
+* Ember.run.sync()
+    * Immediately flush the `sync` queue.
+    * aka "force all bindings to sync right now"
+    * Ember does not use this internallly
+
+* `Ember.run.schedule`
+    * calls CheckAutoRun()
+    * Then calls Ember.backburner.schedule aka Ember.backburner.defer
+
+* Ember.run.once
+    * same as calling `scheduleOnce` with the "actions" queue.
+
+* Ember.run.scheduleOnce
+    * Calls Ember.backburner.scheduleOnce aka Ember.backburner.deferOnce
+
+* Ember.run.next
+    * Calls Ember.backburner.later aka Ember.backburner.setTimeout
+    * puts the callback at the start of the timers queue
+
+* Ember.run.currentRunLoop
+    * Reference to the current runloop
+```
+
