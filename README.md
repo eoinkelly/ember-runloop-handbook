@@ -7,8 +7,7 @@ by [Eoin Kelly](https://twitter.com/eoinkelly)
 ### Current status
 
 ```
-Very much a work in progress. Currently still compiling my notes and researching
-topics.
+Very much a work in progress.
 ```
 
 ### Contributing
@@ -61,20 +60,7 @@ hard problem and hindsight is 20/20. The _Runloop_ is what we have so that is
 what we will call it but try not to infer too much about its action from the
 name.
 
-# section: Why Runloop?
-
-```
-background (the environment ember lives in)
-    Javascript event loop
-    all about events:
-        where they come from
-        what they are
-    examples of how vanialla Javascript handles them
-    show timeline of how vanilla Javascript responds to events
-    show how ember is just a fancy example of handling events
-    discuss the ways in which the vanilla approach doesn't scale well if you are doing lots of work
-    end with a clear statement of the problems that the runloop solves
-```
+# Why do we have a Runloop?
 
 ## Background
 
@@ -254,6 +240,7 @@ listener function that Ember registered with the browser. What happens after
 that? Lets consider an imaginary example of how a simpler, _no Runloop_ Ember
 might respond:
 
+    TODO:
     [explain here the kinds of work that ember does and make it clear that there are
     natural phases to it]
     [walk through a simple example showing how it would look if ember just did
@@ -494,22 +481,51 @@ large apps.
 
 # How do I use the runloop?
 
-| Function Name | Runloop (current/future/always-new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) |
-| ----------------------------- | -------------------------- | -------- | ----------- | ----------- |
-| `Ember.run`		            | always-new | `actions` | Always | No |
-| `Ember.run.debounce`		    | always-new | `actions` | Always | No |
-| `Ember.run.throttle`		    | always-new | `actions` | Always | No |
-| `Ember.run.join`		        | current | `actions` | If required | No |
-| `Ember.run.bind`		        | current | `actions` | If required | No |
-| `Ember.run.schedule`		    | current | chosen by param | If required | Yes |
-| `Ember.run.scheduleOnce`		| current | chosen by param| If required | Yes |
-| `Ember.run.later`		        | future | `actions` | If required | Yes |
-| `Ember.run.next`		        | future | `actions` | If required | Yes |
-| `Ember.run.once`		        | current | `actions` | If required | Yes |
-| `Ember.run.begin`		        | NA | NA | Never | No |
-| `Ember.run.end`		        | NA | NA | Never | No |
-| `Ember.run.cancel`		    | NA | NA | NA | NA |
-| `Ember.run.sync`		        | NA | NA | NA | NA |
+The [Ember Runloop API docs]() have good info on what each function does. Here
+we are going to take a high-level overview of how the API works and the types of
+things it lets you do
+
+In the API we have:
+
+    TODO: make these link to the API docs
+
+* 1 way of running a given callback in a new Runloop
+    * `Ember.run`
+* 1 way of adding a callback to an the currently open Runloop
+    * `Ember.run.schedule`
+* 2 ways to add a callback to current Runloop and ensure that it is only added once.
+    * `Ember.run.scheduleOnce`
+    * `Ember.run.once`
+* 2 ways to add a callback to some future runloop
+    * `Ember.run.later`
+    * `Ember.run.next`
+* 2 ways to of doing rate control on a callback. These control how often callback is called (it will get its own runloop each time)
+    * `Ember.run.debounce`
+    * `Ember.run.throttle`
+* 1 way of cancelling work scheduled for a future Runloop or rate control
+    * `Ember.run.cancel`
+* 2 functions provide a low-level alternative to `Ember.run`
+    * `Ember.run.begin`
+    * `Ember.run.end`
+* 1 convenience function for forcing bindings to settle
+    * `Ember.run.sync`
+
+| Function Name | Runloop (current/future/always-new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) | Runs callback in current JS event loop turn
+| ----------------------------- | -------------------------- | -------- | ----------- | ----------- |----------- |
+| `Ember.run`		            | always-new | `actions` | Always | No | Yes |
+| `Ember.run.debounce`		    | always-new | `actions` | Always | No | No |
+| `Ember.run.throttle`		    | always-new | `actions` | Always | No | No |
+| `Ember.run.join`		        | current | `actions` | If required | No | Yes |
+| `Ember.run.bind`		        | current | `actions` | If required | No | No |
+| `Ember.run.schedule`		    | current | chosen by param | If required | Yes | Yes |
+| `Ember.run.scheduleOnce`		| current | chosen by param| If required | Yes | Yes |
+| `Ember.run.once`		        | current | `actions` | If required | Yes | No |
+| `Ember.run.later`		        | future | `actions` | If required | Yes | No |
+| `Ember.run.next`		        | future | `actions` | If required | Yes | No |
+| `Ember.run.begin`		        | NA | NA | Never | No | NA |
+| `Ember.run.end`		        | NA | NA | Never | No | NA |
+| `Ember.run.cancel`		    | NA | NA | NA | NA | NA |
+| `Ember.run.sync`		        | NA | NA | NA | NA | NA |
 
 
 Legend:
@@ -518,37 +534,13 @@ Legend:
 * The default queue in Ember is `actions`
 * NA = not applicable
 
-```
-TODO: add some category columns to above to e.g.
-    runs in current turn of JS event loop
-    puts its callback arg onto timers array
-    Will share with runloop started implicitly by response to event
 
-API overview:
+### A note about future work
 
-3 timer management functions
-5 functions that let you run a callback in the future
-2 low-level manual runloop control functions
-1 convenience function for forcing bindings to settle
-
-executing a callback you give to one of the 5 "timer runner" functions will
-create a new runloop if there isn't
-
-Q: will a timer function share an already open ember runloop or always create its own
-    * When is my call to Ember.run.* is discovered by Ember????
-    * do the timer functions always use Ember.run ????
-
-    anything that uses Ember.run will always create its own loop
-```
-
-
-### Ember and future work
-
-There are 3 functions in the Runloop API let us schedule "future work":
+There are 2 functions in the Runloop API let us schedule "future work":
 
 1. `Ember.run.later`
 1. `Ember.run.next`
-1. `Ember.run.once`
 
 Each of these API functions is a way of expressing _when_ you would like work
 (a callback function) to happen. The garuantee provided by the Runloop is that
@@ -569,8 +561,9 @@ The key points:
   callback) pair to this array.
 * Ember does now know **exactly** when it will get a chance to execute this future
   work (Javascript might be busy doing something else)
-* Each time it checks for future it executes all the functions whose timestamps are in the past
-* So the X API functions are creative in their creation of timestamps to achieve what they want.
+* Each time it checks the timers queue it executes all the functions whose timestamps
+  are in the past so the future work API functions are creative in their
+  creation of timestamps to achieve what they want.
 * When Ember does find some pairs on the _future work queue_ that should be
   executed it creates a new runloop for those functions (using `Ember.run`) and
   schedules each function onto the `actions` queue.
@@ -583,74 +576,25 @@ Consequences:
     * It will only every share with other functions from the _future work queue_
       - it will not share a runloop with other Ember code or anything you
       explicitly pass to `Ember.run` yourself
-* You can only put _future work_ on the `actions` queue so if you need to run
-  something on a future `afterRender` queue you need to schedule it from within
-  the function you gave the _future work_ API (TODO: terrbile sentence)
+* You can only directly schedule _future work_ onto the `actions` queue. If you need to run
+  something on a different queue of that future Runloop you will need to
+  schedule it _from_ that `actions` queue callback.
 * _future work_ APIs let you specify _some_ future runloop but not exactly which
   one.
 
-```
-"run any other functions whose timers expire at a similar time in that same runloop"
+### A note about rate control
 
-TODO: I *think* that the timers loop just runs functions whose timestamps have
-expired - this is how ember implements that "timers which expire at similar
-times" stuff.
+Ember provides two flavors of rate control.
 
-QUESTION: how does ember check for work on the timers array?
-    ANSWER: ???
-    _laterTimer is a variable that holds a timerout value that is used to schedule
-    the running of executeTimers() executeTimers() is what actually runs the callbacks)
+* `Ember.run.debounce`
+    * Ignore a callback if the previous call to it was within a given time period
+* `Ember.run.throttle`
+    * Used to garuantee a minimum time between calls to a particular callback
 
-    _laterTimerExpiresAt
-    ???
-
-searchTimers()
-* this func is repsonsible for deciding what timers have expired and should be
-  added to the new runloop
-
-
-debounce, throttle use window.setTimeout and call Ember.run
-so they do not use the "timer queues" mechanism at all
-=> they are a separate strand of "future work"
-
-throttle and debounce are a a thing on their own
-    when they do decide to run the callback they wrap it in `Ember.run`
-    => the method will get **a runloop just for itself**
-
-ember maintains an internal lists of "throttlers" and "debouncees"
-
-need to separate these somehow
-=> perhaps ember has _queued future work_ and _future work_
-
-
-diff between throttle and debounce?
-
-throttle (target, method, args*, spacing, immediate = true)
-    * target method is run on leading edge of spacing period if immediate == true
-    * no matter how many calls to throttle(same args) come in, Ember will run at
-      most one per 'spacing' ms
-
-debounce (target, method, args*, wait, immediate = false)
-    * delay calling the method until we get a 'wait' amount of time with no
-      calls to debounce
-    * use it when you have an event that will be called multiple times but you
-      only want to run a callback once when the event is *finished* e.g. run a
-      callback when a user finishes scrolling
-    * immediate allows you to call the method immediately and then start waiting
-      this lets you
-    * for a 'wait' lenght period without any calls to the method - this lets
-    * 'wait' is the amount of time Ember should remember this call for - after
-    * that time has expired Ember will forget about it
-
-    "I want to call this method once now and ignore all future calls to it until
-    there has been a peiod of 'wait' ms with no call to it. Once that has
-    happened you can stop ignoring it and call it again"
-
-    * Use debounce when an event may fire many times over a brief period of time
-    * e.g. scroll and you only want to run one callback in response - use
-    * 'immediate' to control whether the callback is run at the start of the
-    * "event storm" or at the end
-```
+These functions are useful becuase they allow us to control when the given
+callbck is _not_ run. When it is actually run, these functions use `Ember.run`
+so these functions can be thought of  as "`Ember.run` with some extra controls
+about when the function should be run"
 
 # Appendices
 

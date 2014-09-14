@@ -48275,9 +48275,9 @@ Vuvuzela = (function () {
     var queues = Ember.run.backburner.currentInstance.queues;
 
     var reports = names.map(function (name) {
-      return name + ": items:" + queues[name]._queue.length + " (4 items per job)\n";
+      return name + ": items:" + queues[name]._queue.length + "\n";
     });
-    return reports.join('* ');
+    return "\n" + reports.join("* ");
   }
 
   // Vuvuzela = {};

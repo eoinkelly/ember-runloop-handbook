@@ -765,3 +765,66 @@ This section is a bit confused: what am I trying to achieve here?
     * Reference to the current runloop
 ```
 
+```
+"run any other functions whose timers expire at a similar time in that same runloop"
+
+TODO: I *think* that the timers loop just runs functions whose timestamps have
+expired - this is how ember implements that "timers which expire at similar
+times" stuff.
+
+QUESTION: how does ember check for work on the timers array?
+    ANSWER: ???
+    _laterTimer is a variable that holds a timerout value that is used to schedule
+    the running of executeTimers() executeTimers() is what actually runs the callbacks)
+
+    _laterTimerExpiresAt
+    ???
+
+searchTimers()
+* this func is repsonsible for deciding what timers have expired and should be
+  added to the new runloop
+
+
+debounce, throttle use window.setTimeout and call Ember.run
+so they do not use the "timer queues" mechanism at all
+=> they are a separate strand of "future work"
+
+throttle and debounce are a a thing on their own
+    when they do decide to run the callback they wrap it in `Ember.run`
+    => the method will get **a runloop just for itself**
+
+ember maintains an internal lists of "throttlers" and "debouncees"
+
+need to separate these somehow
+=> perhaps ember has _queued future work_ and _future work_
+
+
+diff between throttle and debounce?
+
+throttle (target, method, args*, spacing, immediate = true)
+    * target method is run on leading edge of spacing period if immediate == true
+    * no matter how many calls to throttle(same args) come in, Ember will run at
+      most one per 'spacing' ms
+
+debounce (target, method, args*, wait, immediate = false)
+    * delay calling the method until we get a 'wait' amount of time with no
+      calls to debounce
+    * use it when you have an event that will be called multiple times but you
+      only want to run a callback once when the event is *finished* e.g. run a
+      callback when a user finishes scrolling
+    * immediate allows you to call the method immediately and then start waiting
+      this lets you
+    * for a 'wait' lenght period without any calls to the method - this lets
+    * 'wait' is the amount of time Ember should remember this call for - after
+    * that time has expired Ember will forget about it
+
+    "I want to call this method once now and ignore all future calls to it until
+    there has been a peiod of 'wait' ms with no call to it. Once that has
+    happened you can stop ignoring it and call it again"
+
+    * Use debounce when an event may fire many times over a brief period of time
+    * e.g. scroll and you only want to run one callback in response - use
+    * 'immediate' to control whether the callback is run at the start of the
+    * "event storm" or at the end
+```
+
