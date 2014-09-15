@@ -828,3 +828,48 @@ debounce (target, method, args*, wait, immediate = false)
     * "event storm" or at the end
 ```
 
+### Does Ember wrap my async code in a runloop if I forget? If so how?
+
+```
+STATUS: INCOMPLETE
+
+the guide says that ember will wrap any ordinary async calls in a runloop - how?
+    I don't think this really happens!
+
+The runloop guide says that ember will try to wrap async callbacks in a runloop
+(http://emberjs.com/guides/understanding-ember/run-loop/#toc_what-happens-if-i-forget-to-start-a-run-loop-in-an-async-handler)
+but I can't find where this happens within Ember code - can anyone give me any
+pointers?
+
+    guide says:
+    * if ember detects an event handler running (how???) it opens a runloop and
+    closes it (which actually executes your code) on the next JS event loop turn
+    * this is bad because your code does not run in the turn you thought it would
+    and there can be a gap between turns if the browser decides to do GC etc.
+```
+
+Aside: You really want your runlooop to start and end in a single JS frame
+otherwise the browser might do otherwork if it spans frames e.g. GC
+
+
+
+### How is Runloop behaviour different when testing?
+
+## How autorunning works normally
+
+* backburner.createAutorun()
+    * calls begin() immediately and schedules an end() (using setTimeout) on the very next turn of the event loop
+      i.e. opens a runloop that will stay open for this turn of the event loop
+    * does NOT pay attention to Ember.testing
+
+* backburner.checkAutoRun
+    * If there isn't a currently open runloop, it will throw an error if `Ember.testing` is set.
+    * its purpose is to stop your program if Ember.testing is set and there isn't a runloop already open
+
+* checkAutoRun is called by 3 functions
+    run.schedule()
+    run.scheduleOnce()
+    run.once()
+* createAutorun is called by 2 functions
+    backburner.defer()
+    backburner.deferOnce()

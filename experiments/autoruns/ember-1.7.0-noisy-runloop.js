@@ -2452,6 +2452,7 @@ define("ember-application/system/application",
           run.schedule('actions', self, '_initialize');
         } else {
           this.$().ready(function runInitialize() {
+            Ember.debug('Responding to DOMContentReady event');
             run(self, '_initialize');
           });
         }
@@ -37129,6 +37130,7 @@ define("ember-views/system/event_dispatcher",
         var self = this;
 
         rootElement.on(event + '.ember', '.ember-view', function(evt, triggeringManager) {
+          Ember.debug('Handling event: ' + eventName);
           var view = View.views[this.id],
               result = true;
 
@@ -48234,6 +48236,7 @@ requireModule("ember");
 
 })();
 
+
 /**
  * Vuvuzela
  *
@@ -48275,28 +48278,28 @@ Vuvuzela = (function () {
     var queues = Ember.run.backburner.currentInstance.queues;
 
     var reports = names.map(function (name) {
-      return name + ": items:" + queues[name]._queue.length + "\n";
+      return name + ": items:" + queues[name]._queue.length + " (4 items per job)\n";
     });
-    return "\n" + reports.join("* ");
+    return reports.join('* ');
   }
 
-  // Vuvuzela = {};
-  // Vuvuzela.debug = Ember.debug;
-
-  //
-  // var setup = function (App) {
-  //   var old_initialize = App._initialize;
-  //
-  //   App._initialize = function () {
-  //     Ember.debug('At start of _initialize() the queues look like:' + queuesReport());
-  //     old_initialize.apply(App, arguments);
-  //     Ember.debug('At end of _initialize() the queues look like:' + queuesReport());
-  //   };
-  // };
-  //
-  return {
-    debug: Ember.debug
+  var setup = function (App) {
+    // var old_initialize = App._initialize;
+    // App._initialize = function () {
+    //   Ember.debug('At start of _initialize() the queues look like:' + queuesReport());
+    //   old_initialize.apply(App, arguments);
+    //   Ember.debug('At end of _initialize() the queues look like:' + queuesReport());
+    // };
+    // var dispatcher = App.__container__.lookup('event_dispatcher:main');
+    // var oldHandler = dispatcher.setupHandler;
+    // dispatcher.setupHandler = function(rootElement, event, eventName) {
+    //   // Ember.debug('Handling event: ' + eventName);
+    //   oldHandler.apply(dispatcher, arguments);
+    // }
   };
 
+  return {
+    debug: Ember.debug,
+    setup: setup
+  };
 }());
-

@@ -16,6 +16,9 @@ Ember.Application.initializer({
     delete events.mousemove;
     delete events.mouseenter;
     delete events.mouseleave;
+
+    delete events.mousedown;
+    delete events.mouseup;
   }
 });
 
@@ -45,6 +48,8 @@ window.Todos = Ember.Application.create({
   //   });
   // }
 });
+
+Vuvuzela.setup(Todos);
 
 Todos.Router.map(function() {
     this.resource('todos', { path: '/' });

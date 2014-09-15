@@ -404,68 +404,21 @@ Ember.Application.initializer({
 });
 ```
 
-### Does Ember wrap my async code in a runloop if I forget? If so how?
+#### How is runloop behaviour different when testing?
 
-```
-STATUS: INCOMPLETE
+Normally the runloop API functions
 
-the guide says that ember will wrap any ordinary async calls in a runloop - how?
-    I don't think this really happens!
+* `run.schedule`
+* `run.scheduleOnce`
+* `run.once`
 
-    The runloop guide says that ember will try to wrap async callbacks in a runloop
-    (http://emberjs.com/guides/understanding-ember/run-loop/#toc_what-happens-if-i-forget-to-start-a-run-loop-in-an-async-handler)
-    but I can't find where this happens within Ember code - can anyone give me any
-    pointers?
+will create a new runloop if one does not exist - these automatically (implicitly) created runloops are called _autoruns_. If `Ember.testing` is set then that behaviour is disabled. In fact when `Ember.testing` is set these three functions will throw an error if you run them at a time when there is not an existing runloop available.
 
-    guide says:
-    * if ember detects an event handler running (how???) it opens a runloop and
-    closes it (which actually executes your code) on the next JS event loop turn
-    * this is bad because your code does not run in the turn you thought it would
-    and there can be a gap between turns if the browser decides to do GC etc.
-```
+The reasons for this are:
 
-Aside: You really want your runlooop to start and end in a single JS frame
-otherwise the browser might do otherwork if it spans frames e.g. GC
+1. _autoruns_ are Embers way of not punishing you in production if you forget to open a runloop before you schedule callbacks on it. While this is useful in production, these are still errors and are revealed as such in testing mode to help you find and fix them.
+2. ???
 
-
-### How is Runloop behaviour different when testing?
-
-```
-STATUS: INCOMPLETE
-
-> "Some of Ember's test helpers are promises that wait for the run loop to empty before resolving."
-
-Q: what ember funcs do defer() and deferOnce() map on to???
-
-Ember.backburner.defer() an Ember.backburner.deferOnce will create an
-"autorun" runloop if no runloop is currently open. they call `checkAutoRun()` to
-prevent that this behaviour when `Ember.testing` is set.
-
-
-TODO: investigate this:
-8. `Ember.Test` has its own internal `run()` that will use the normal runloop
-   `run()` if a runloop is open or otherwise just run the provide calback
-   synchronously
-    is this what the docs mean about disabling autoruns in testing ???
-
-
-# auto run methods: createAutorun() and checkAutoRun()
-
-* Ember.backburner.createAutorun()
-    * calls begin() immediately and schedules an end() (using setTimeout) on the very next turn of the event loop
-    * i.e. opens a runloop that will stay open for this turn of the event loop
-    * is only called by `backburner.defer()` and `backburner.deferOnce()`! iff there is not an already open runloop
-        Two places total!
-
-* Ember.backburnder.checkAutoRun()
-    * If there isn't a currently open runloop, it will throw an error if `Ember.testing` is set.
-
-checkAutoRun is called by 3 functions
-Ember.run.
-    schedule()
-    scheduleOnce()
-    once()
-```
 
 ### Summary
 
