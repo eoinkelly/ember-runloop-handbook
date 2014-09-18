@@ -43,23 +43,4 @@ Vuvuzela = (function () {
     });
     return reports.join('\n* ');
   }
-
-  // var setup = function (App) {
-  //   // var old_initialize = App._initialize;
-  //   // App._initialize = function () {
-  //   //   Ember.debug('At start of _initialize() the queues look like:' + queuesReport());
-  //   //   old_initialize.apply(App, arguments);
-  //   //   Ember.debug('At end of _initialize() the queues look like:' + queuesReport());
-  //   // };
-  //   // var dispatcher = App.__container__.lookup('event_dispatcher:main');
-  //   // var oldHandler = dispatcher.setupHandler;
-  //   // dispatcher.setupHandler = function(rootElement, event, eventName) {
-  //   //   // Ember.debug('Handling event: ' + eventName);
-  //   //   oldHandler.apply(dispatcher, arguments);
-  //   // }
-  // };
-  //
-  // return {
-  //   debug: Ember.debug
-  // };
 }());
