@@ -251,7 +251,6 @@ We can see from this example that the work can be grouped into just a few
 categories:
 
 1. Bindings need to be synced
-1. ???
 1. Update the DOM (rendering)
 1. Manipulate the new DOM (after rendering)
 
