@@ -6,9 +6,7 @@ by [Eoin Kelly](https://twitter.com/eoinkelly)
 
 ### Current status
 
-```
-Very much a work in progress.
-```
+    Content is complete. In editing
 
 ### Contributing
 
@@ -206,43 +204,49 @@ dig a little deeper into these periods of intense activity.
 
 We already know that the first code to get run in reponse to an event is the
 listener function that Ember registered with the browser. What happens after
-that? Lets consider an imaginary example of how a simpler, _no runloop_ Ember
-might respond:
+that?
 
-http://jsbin.com/diyuj/1/edit?html,js,output
+Lets consider some code from an imaginary simple Javascript app:
 
-<a class="jsbin-embed" href="http://jsbin.com/diyuj/1/embed?html,js,output">JS Bin</a><script src="http://static.jsbin.com/js/embed.js"></script>
+[http://jsbin.com/diyuj/1/edit?html,js,output](http://jsbin.com/diyuj/1/edit?html,js,output)
 
-    TODO:
-    [explain here the kinds of work that ember does and make it clear that there are
-    natural phases to it]
-    [walk through a simple example showing how it would look if ember just did
-    owrk as it needed to]
-    // ["sync", "actions", "routerTransitions", "render", "afterRender", "destroy"]
+This code manages the "Mark all completed" button in the UI.
 
-We can see from this example that the work can be grouped into just a few
-categories:
+Click the button a few times and notice the console output. Notice that the
+work can be grouped into just a few categories:
 
-1. Bindings need to be synced
-1. Update the DOM (rendering)
-1. Manipulate the new DOM (after rendering)
+1. Update the model
+2. Update the DOM (rendering)
 
-Our _do work as you need it_ approach means that these types of work are
-interleaved. This has some significant downsides:
+and that the _do work as you find it_ approach that this app uses means that
+these types of work are interleaved.
 
-1. It is inefficent. Every time we changed the DOM in the example above the browser
-did a layout and paint - these are expensive operations that we did more often
-than we needed to.
-2. It is difficult to choose a point in time all DOM changes have happened. The
-rendering happened a little bit at a time it is difficult to know when we can
-safely work with the new state of the DOM .e.g. if we wanted to animate an
-element into view once all our changes were complete.
-3. Because we were just deleting objects as they went out of scope we
-don't really have a good handle on when the browser will decide that it should
-run garbage collection.
+The code in this app is somewhat typical of the approach we have taken in the
+past to app developement. The app is obviously very incomplete and I'm sure you
+can see many ways it could be improved.
 
-We would give our imaginary _no runloop_ Ember an **A** for enthusiasm but a **D**
-for efficency.
+There are problems with this app that might not be obvious at first, problems
+that you will only start to notice when the app grows in complexity. To
+understand these lets look at what it is _not_ doing:
+
+1. It is not coordinating its access of the DOM. Every time we an app updates the DOM the
+   browser did a layout and paint. These are very expensive operations especially
+   on mobile.
+2. It has no way of telling us when DOM updating is finished. We can certainly
+   hook into the click handler for the "Mark all completed" button but what if
+   had started some asynchronous work like updating the server? If this app was
+   more realistic it would be very difficult to know where we should add code
+   that would be run when all DOM updates had finished.
+3. It is not controlling _when_ objects get deleted. Currently our app is so
+   trivial that this is not a problem but imagine if we had hundreds of todo
+   items and complex processing of each one i.e. processing each todo item
+   created a lot of objects. The problem here is that after a while the browser
+   will decide that enough is enough and that it needs to "clean up" these
+   objects and make their memory available again i.e. it will run garbage
+   collection. Since our app cannot run while GC is happening the user may
+   notice a pause.
+
+Together these problems mean our simplistic Todo app will have serious scaling problems.
 
 ## Enter the runloop
 
@@ -256,7 +260,6 @@ set of queues. By default Ember has six queues:
 console.log(Ember.run.queues);
 // ["sync", "actions", "routerTransitions", "render", "afterRender", "destroy"]
 ```
-
 
 Each queue corresponds to a "phase of work" identified by the Ember core team.
 This set of queues and the code that manages them **is** the Ember runloop.
