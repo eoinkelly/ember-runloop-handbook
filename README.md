@@ -1,22 +1,23 @@
-# Ember Javascript runloop Handbook
+# Ember runloop handbook
 
 by [Eoin Kelly](https://twitter.com/eoinkelly)
 
 ![Creative Commons License](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)
 
-### Current status
-
-    Content is complete. In editing
-
 ### Contributing
 
-You should. :-). If you spot any of the (inevitable) errors, omissions, things
-which are unclear you would be doing me a great favour by opening an issue.
+If you spot any of the (sadly inevitable) errors you would be doing me a great
+favour by opening an issue :-).
 
 # Introduction
 
-We are about to take a deep dive into the Ember.js runloop. Why? Because
-eventually you need to. Together we will answer these questions:
+You can get started with Ember application development without understanding the
+runloop. However at some point you will want to dig in and understand it
+properly so you can use it skillfully. It is my sincere hope that this handbook
+can be your guide.
+
+We are about to take a deep dive into the Ember.js runloop. Together we will
+answer these questions:
 
 2. Why does Ember have this runloop thing?
 1. What is the runloop?
@@ -28,11 +29,6 @@ _"I'm an experienced dev, just give me the concepts in a succinct way"_
 documentation - the [Official Ember Run-loop
 guide](http://emberjs.com/guides/understanding-ember/run-loop/) has that
 covered. This is a longer, more detailed look at the runloop.
-
-You can get started with Ember application development without understanding the
-runloop. However at some point you will want to dig in and understand it
-properly so you can use it skillfully. It is my sincere hope that this handbook
-can be your guide.
 
 ## Naming is hard
 
