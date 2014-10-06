@@ -582,31 +582,27 @@ does not guarantee anything else!
 The key points:
 
 * Ember keeps an internal queue of "future work" in the form of an array of
-  timestamp and function pairs e.g.
-    ```js
-    // pseudo code:
-    [(timestamp, fn), (timestamp, fn) ... ]
-    ```
-* It uses this queue to manage _work you have asked it to do but not on the current runloop_
+  timestamp and function pairs e.g. `[(timestamp, fn), (timestamp, fn) ... ]`
+* It uses this queue to manage _work you have asked it to do on some runloop that is not the current one_.
 * Each of the API functions above is a different way of adding a (timestamp,
   callback) pair to this array.
-* Ember does now know **exactly** when it will get a chance to execute this future
-  work (Javascript might be busy doing something else)
+* Ember does now know exactly when it will get a chance to execute this future
+  work (Javascript might be busy doing something else).
 * Each time it checks the timers queue it executes all the functions whose timestamps
   are in the past so the future work API functions are creative in their
   creation of timestamps to achieve what they want.
 * When Ember does find some pairs on the _future work queue_ that should be
-  executed it creates a new runloop for those functions (using `Ember.run`) and
-  schedules each function onto the `actions` queue.
+  executed it creates a new runloop (using `Ember.run`) and schedules each
+  function onto the `actions` queue.
 
 Consequences:
 
-* When you give a function to one of the _Future work_ API functions you cannot
-  know which runloop it will run in.
-    * It may share a runloop iwth other _future work_ functions
+* When you give a function to one of the _future work_ API functions you cannot
+  know which runloop it will run in!
+    * It may share a runloop iwth other _future work_ functions.
     * It will only every share with other functions from the _future work queue_
       - it will not share a runloop with other Ember code or anything you
-      explicitly pass to `Ember.run` yourself
+      explicitly pass to `Ember.run` yourself.
 * You can only directly schedule _future work_ onto the `actions` queue. If you need to run
   something on a different queue of that future runloop you will need to
   schedule it _from_ that `actions` queue callback.
