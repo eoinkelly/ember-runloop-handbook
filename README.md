@@ -4,7 +4,7 @@ by [Eoin Kelly](https://twitter.com/eoinkelly)
 
 ![Creative Commons License](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)
 
-### Contributing
+# Contributing
 
 If you spot any of the (sadly inevitable) errors you would be doing me a great
 favour by opening an issue :-).
@@ -53,8 +53,6 @@ what we will call it but try not to infer too much about its action from its
 name.
 
 # Why do we have a runloop?
-
-## Background
 
 On our journey to understand the runloop we must first understand the
 environment it lives in and the problems it is trying to solve.  Lets set the
@@ -144,7 +142,7 @@ a few "aha!" inducing diagrams.
 
 # Enter the Ember!
 
-### Things we already know
+## Things we already know
 
 Since Ember is Javascript we already know quite a bit about how Ember works:
 
@@ -157,7 +155,7 @@ Since Ember is Javascript we already know quite a bit about how Ember works:
   on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
   alarm clock (e.g. `setTimeout`)
 
-### Where does the framework end an my app begin
+## Where does the framework end an my app begin
 
 How does your Ember _application_ relate to the Ember _framework_? The machinery
 for responding to events is part of Ember _framework_ itself but it does not
@@ -171,7 +169,7 @@ won't be able to do anything meaningful with it without
 2. The Route objects themselves e.g. `BlogRoute`, `PostsRoute`, `AuthorsRoute`
 3. The models, controllers, views that all play a part in putting new data on the screen
 
-### What events does Ember listen to?
+## What events does Ember listen to?
 
 The Ember docs have a list of [events Ember listens for by
 default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names) which I have repeated here:
@@ -209,7 +207,7 @@ default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names) which I
 These are 29 the entry points into our code. Whenever Ember code runs after the
 setup phase, it is in response to an event from this list.
 
-### How ember listens for events
+## How ember listens for events
 
 [This](http://www.quirksmode.org/js/events_order.html) is a good resource for
 refreshing your understanding of how DOM events work. To get the most of the
@@ -223,7 +221,7 @@ ourselves with jQuery.  More specifically:
 * This element is `<body>` unless your application specifies a `rootElement`
 * Ember attaches its listeners to the "bubbling" phase.
 
-## A simplistic approach
+## Example: A simplistic approach
 
 The pattern of how Javascript (Ember) works is periods of intense activity in
 response to some event followed by idleness until the next event happens. Lets
@@ -292,7 +290,7 @@ You can see a summary of the purpose of each queue in the [runloop
 Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
 but today we are going to focus on the queues themselves.
 
-### How it works
+## How it works
 
 First lets get some terminology sorted:
 
@@ -368,7 +366,7 @@ DOM access will happen at one time.
 From what I have observed, Ember typically runs one runloop in response to each
 DOM event that it handles.
 
-#### Visualising the runloop for yourself
+## Visualising the runloop for yourself
 
 This repo also contains the [noisy runloop kit]() which is trivial demo app and
 a copy of Ember that I have patched to be very noisy about what its runloop
@@ -377,7 +375,7 @@ response in the console. You can also use the included version of Ember in your 
 project to visualise what is happening there. Obviously you should only include
 this in development because it will slow the runloop down a lot.
 
-#### Enough with the mousemove already!
+## Enough with the mousemove already!
 
 When you start getting the runloop to log its work you will quickly get
 overwhelmed by its running in response to mouse events that happen very
@@ -408,7 +406,7 @@ Ember.Application.initializer({
 });
 ```
 
-#### What are _autoruns_?
+## What are _autoruns_?
 
 In Ember calls to any of
 
@@ -485,7 +483,7 @@ garbage collection.
 in autoruns.  All other code in your callback will happen outside Ember. This
 can lead to unexpected and confusing behavior.
 
-#### How is runloop behaviour different when testing?
+## How is runloop behaviour different when testing?
 
 We know that
 
@@ -569,7 +567,7 @@ Legend:
 * NA = not applicable
 
 
-### A note about future work
+## A note about future work
 
 There are 2 functions in the runloop API let us schedule "future work":
 
@@ -615,7 +613,7 @@ Consequences:
 * _future work_ APIs let you specify _some_ future runloop but not exactly which
   one.
 
-### A note about rate control
+## A note about rate control
 
 Ember provides two flavors of rate control.
 
