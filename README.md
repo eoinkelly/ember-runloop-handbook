@@ -179,8 +179,17 @@ won't be able to do anything meaningful with it without
 
 The Ember docs have a list of [events Ember listens for by
 default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names). These
-are 28 the entry points into our code. **Anytime Ember does anything it is in
-response to one of these events.**
+are 28 the entry points into our code.
+
+| | | | | | |
+|----------|---------|-------|--|--|--|
+|touchStart | touchMove | touchEnd |touchCancel | keyDown | keyUp
+|keyPress | mouseDown | mouseUp |contextMenu | click | doubleClick
+|mouseMove | focusIn | focusOut |mouseEnter | mouseLeave | submit
+|change | focusIn | focusOut |input | dragStart | drag
+|dragEnter | dragLeave | dragOver |dragEnd | drop | |
+
+Whenever Ember code runs after the setup phase, it is in response to an event from this list.
 
 ### How ember listens for events
 
@@ -196,7 +205,7 @@ ourselves with jQuery.  More specifically:
 * This element is `<body>` unless your application specifies a `rootElement`
 * Ember attaches its listeners to the "bubbling" phase.
 
-## ?
+## A simplistic approach
 
 The pattern of how Javascript (Ember) works is periods of intense activity in
 response to some event followed by idleness until the next event happens. Lets
@@ -208,31 +217,28 @@ that?
 
 Lets consider some code from an imaginary simple Javascript app:
 
-[http://jsbin.com/diyuj/1/edit?html,js,output](http://jsbin.com/diyuj/1/edit?html,js,output)
+[http://jsbin.com/diyuj/5/edit?html,js,console,output](http://jsbin.com/diyuj/5/edit?html,js,console,output)
 
 This code manages the "Mark all completed" button in the UI.
 
-Click the button a few times and notice the console output. Notice that the
-work can be grouped into just a few categories:
+Click the button a few times and notice the console output. Notice that there
+are some patterns to the tasks performed:
 
-1. Update the model
-2. Update the DOM (rendering)
+1. Updating the model
+2. Updating the DOM (rendering)
 
-and that the _do work as you find it_ approach that this app uses means that
-these types of work are interleaved.
+and that the _do work as you find it_ approach that this app takes causes these
+different types of work to be interleaved.
 
-The code in this app is somewhat typical of the approach we have taken in the
-past to app developement. The app is obviously very incomplete and I'm sure you
-can see many ways it could be improved.
+The code in this app is obviously very incomplete and I'm sure you can see many
+ways it could be improved. However there are some problems that might not be
+obvious at first, problems that you will only start to noticet when the app
+grows in complexity. To understand these lets look at what it is _not_ doing:
 
-There are problems with this app that might not be obvious at first, problems
-that you will only start to notice when the app grows in complexity. To
-understand these lets look at what it is _not_ doing:
-
-1. It is not coordinating its access of the DOM. Every time we an app updates the DOM the
+1. It is _not coordinating its access of the DOM_. Every time we an app updates the DOM the
    browser did a layout and paint. These are very expensive operations especially
    on mobile.
-2. It has no way of telling us when DOM updating is finished. We can certainly
+2. It has _no way of telling us when DOM updating is finished_. We can certainly
    hook into the click handler for the "Mark all completed" button but what if
    had started some asynchronous work like updating the server? If this app was
    more realistic it would be very difficult to know where we should add code
@@ -240,7 +246,7 @@ understand these lets look at what it is _not_ doing:
 3. It is not controlling _when_ objects get deleted. Currently our app is so
    trivial that this is not a problem but imagine if we had hundreds of todo
    items and complex processing of each one i.e. processing each todo item
-   created a lot of objects. The problem here is that after a while the browser
+   created a lot of temporary objects in memory. After a while the browser
    will decide that enough is enough and that it needs to "clean up" these
    objects and make their memory available again i.e. it will run garbage
    collection. Since our app cannot run while GC is happening the user may
@@ -250,8 +256,8 @@ Together these problems mean our simplistic Todo app will have serious scaling p
 
 ## Enter the runloop
 
-We have identified some problems caused by an uncoordinated approach to doing work.
-How does Ember solve them?
+We have identified some problems caused by an uncoordinated approach to doing
+work. How does Ember solve them?
 
 Instead of doing work as it finds it, Ember schedules the work on an internal
 set of queues. By default Ember has six queues:
@@ -275,16 +281,18 @@ First lets get some terminology sorted:
 * A _job_ on a queue is just a plain ol' Javascript callback function.
 * _Running a job_ is simply executing that function.
 
-1. A browser event happens and Embers event listener function is triggered.
+How Ember handles events:
+
+1. A browser event happens and Embers registered listener for that event is triggered.
 2. Early on in its response to the event, Ember opens a set of queues and starts
    accepting jobs.
 3. As Ember works its way through your application code, it continues to
 schedule jobs on the queues.
 4. Near the end of its response to the event Ember closes the queue-set and starts
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
-   though we have closed them to other code. The [runloop
-   Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
-   has an excellent visualisaiton of the algorithm works but in brief:
+   though we have closed them to other code.
+5. The [runloop Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
+   has an excellent visualisaiton of how jobs are run but in brief:
     1. Scan the queues array, starting at the first until you find a job. Finish if all queues are empty.
     2. Run the job (aka execute the callback function)
     3. Go to step 1
@@ -294,12 +302,11 @@ Lets consider some subtle consequences of this simple algorihtm:
 * Ember does a full queue scan after each *job* - it does not attempt to finish
   a full queue before checking for earlier work.
 * Ember will only get to jobs on a queue if all the previous queues are empty.
-* Ember cannot *guarantee* that, for example, *all* _sync_ queue tasks will be
-  complete before any _actions_ tasks are attempted because jobs on any queue
-  after _sync_ might add jobs to the _sync_ queue. Ember will however do its
-  best to do work in the desired order. It is (presumably?) not practical for
-  your app to schedule *all* work before any is performed so this flexibility is
-  necessary.
+* Ember cannot *guarantee* that, for example, *all* `sync` queue tasks will be
+  complete before any `actions` tasks are attempted because jobs on any queue
+  after `sync` might add jobs to the `sync` queue. Ember will however do its
+  best to do work in the desired order. It is not practical for your app to
+  schedule *all* work before any is performed so this flexibility is necessary.
 * At first glance it may seem that the runloop has two distinct phases
 
     1. Schedule work
@@ -315,12 +322,13 @@ Lets consider some subtle consequences of this simple algorihtm:
 
 There are also some things which are not obvious:
 
-There is no "singleton" runloop. This is confusing because documentation uses
-the phrase "the runloop" to refer to the whole system but it is important to
-note that there is not a single instance of the runloop in memory (unlike the
-[Ember container](http://emberjs.com/guides/understanding-ember/dependency-injection-and-service-lookup/#toc_dependency-management-in-ember-js)
+There is no "singleton" runloop. This is confusing because documentation
+(including this guide) uses the phrase "the runloop" to refer to the whole
+system but it is important to note that there is not a single instance of the
+runloop in memory (unlike the [Ember
+container](http://emberjs.com/guides/understanding-ember/dependency-injection-and-service-lookup/#toc_dependency-management-in-ember-js)
 which is a singleton). There is no "the" runloop, instead there can
-be multiple instances of "a runloop". It is true that Ember will usually only
+be multiple instances of "a" runloop. It is true that Ember will usually only
 create one runloop per DOM event but this is not always the case. For example:
 
 * When you use `Ember.run` (see below) you will be creating your own
@@ -334,7 +342,7 @@ function as a "global gateway" to DOM access for the Ember app. It is not
 correct to say that the runloop is the "gatekeeper" to all DOM access in Ember,
 rather that "coordinated DOM access" is a pleasant (and deliberate!) side-effect
 of organising all the work done in response to an event.. As mentioned above,
-multiple runloops can exist simultaneously so there is not guarantee that *all*
+multiple runloops can exist simultaneously so there is no guarantee that *all*
 DOM access will happen at one time.
 
 ## How often do runloops happen?
@@ -349,7 +357,7 @@ a copy of Ember that I have patched to be very noisy about what its runloop
 does. You can add features to the demo app and see how the actions the runloop takes in
 response in the console. You can also use the included version of Ember in your own
 project to visualise what is happening there. Obviously you should only include
-this in development because it will slow the runloop down.
+this in development because it will slow the runloop down a lot.
 
 #### Enough with the mousemove already!
 
@@ -409,32 +417,44 @@ $('a').click(function(){
 });
 ```
 
-The above will run in response to a `click` event from the Browser and will most
-likely run before Ember finds out about the `click`. When you call `schedule`
-and `scheduleOnce` Ember notices that there is not a currently open runloop so
-it opens one and schedules it to close on the next turn of the JS event loop.
+When you call `schedule` and `scheduleOnce` Ember notices that there is not a
+currently open runloop so it opens one and schedules it to close on the next
+turn of the JS event loop.
 
 Here is some pseudocode to describe what happens:
 
 ```js
-// This is **not** working code - it simply approximates what Ember does when
-// creating an autorun
 $('a').click(function(){
-  console.log('Doing things...'); // <-- Not within the autorun
-
-  Ember.run.begin();
+  // 1. autoruns do not change the execution of arbitrary code in a callback.
+  //    This code is still run when this callback is executed and will not be
+  //    scheduled on an autorun.
+  console.log('Doing things...');
 
   Ember.run.schedule('actions', this, function() {
-    // Do more things
+    // 2. schedule notices that there is no currently available runloop so it
+    //    creates one. It schedules it to close and flush queues on the next
+    //    turn of the JS event loop.
+    if (! Ember.run.hasOpenRunloop()) {
+      Ember.run.start();
+      nextTick(function() {
+          Ember.run.end()
+      }, 0);
+    }
+
+    // 3. There is now a runloop available so schedule adds its item to the
+    //    given queue
+    Ember.run.schedule('actions', this, function() {
+      // Do more things
+    });
+
   });
 
+  // 4. scheduleOnce sees the autorun created by schedule above as an available
+  //    runloop and adds its item to the given queue.
   Ember.run.scheduleOnce('afterRender', this, function() {
     // Yet more things
   });
 
-  setTimeout(function() {
-    Ember.run.end()
-  }, 0);
 });
 ```
 
@@ -467,26 +487,14 @@ The reasons for this are:
 
 1. Autoruns are Embers way of not punishing you in production if you forget to
 open a runloop before you schedule callbacks on it. While this is useful in
-production, these are still errors and are revealed as such in testing mode to
-help you find and fix them.
+production, these are still issues you should fix and are revealed as such in
+testing mode to help you find and fix them.
 2. Some of Ember's test helpers are promises that wait for the run loop to empty
 before resolving. If your application has code that runs _outside_ a runloop,
 these will resolve too early and gives erroneous test failures which can be
 **very** difficult to find. Disabling autoruns help you identify these scenarios
 and helps both your testing and your application!
 
-
-### Summary
-
-You don't need to understand the runloop to get started making applicaitons with
-Ember you will eventually have to understand it. In exchange for this we get the
-following benefits:
-
-1. We can have a complex response to events in an efficient and coordinated way.
-The standard Javascript tooling for handling events works well but the
-complexity of coordinating a complex event response quickly gets out of hand in
-large apps.
-2. We can insert our own work into know points in this coordinated repsonse.
 
 # How do I use the runloop?
 
@@ -559,9 +567,8 @@ The key points:
 
 * Ember keeps an internal queue of "future work" in the form of an array of
   timestamp and function pairs e.g.
-    ```
-    [1410373997044, function fn() {..}, 1410373997048, function fn() {..}, 1410373997052, function fn() {..}]
-    // or in pseudo code:
+    ```js
+    // pseudo code:
     [(timestamp, fn), (timestamp, fn) ... ]
     ```
 * It uses this queue to manage _work you have asked it to do but not on the current runloop_
@@ -603,6 +610,14 @@ These functions are useful becuase they allow us to control when the given
 callbck is _not_ run. When it is actually run, these functions use `Ember.run`
 so these functions can be thought of  as "`Ember.run` with some extra controls
 about when the function should be run"
+
+# Summary
+
+It can take a while to get our heads around the subtlties of the runloop. In
+exchange we get the performance and scaling benefits that the runloop provides.
+I hope that you now feel more equipped to use the runloop skillfully.
+
+Happy hacking.
 
 # Appendices
 
