@@ -178,18 +178,40 @@ won't be able to do anything meaningful with it without
 ### What events does Ember listen to?
 
 The Ember docs have a list of [events Ember listens for by
-default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names). These
-are 28 the entry points into our code.
+default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names) which I have repeated here:
 
-| | | | | | |
-|----------|---------|-------|--|--|--|
-|touchStart | touchMove | touchEnd |touchCancel | keyDown | keyUp
-|keyPress | mouseDown | mouseUp |contextMenu | click | doubleClick
-|mouseMove | focusIn | focusOut |mouseEnter | mouseLeave | submit
-|change | focusIn | focusOut |input | dragStart | drag
-|dragEnter | dragLeave | dragOver |dragEnd | drop | |
+1. touchStart
+2. touchMove
+3. touchEnd
+4. touchCancel
+5. keyDown
+6. keyUp
+7. keyPress
+8. mouseDown
+9. mouseUp
+10. contextMenu
+11. click
+12. doubleClick
+13. mouseMove
+14. focusIn
+15. focusOut
+16. mouseEnter
+17. mouseLeave
+18. submit
+19. change
+20. focusIn
+21. focusOut
+22. input
+23. dragStart
+24. drag
+25. dragEnter
+26. dragLeave
+27. dragOver
+28. dragEnd
+29. drop
 
-Whenever Ember code runs after the setup phase, it is in response to an event from this list.
+These are 29 the entry points into our code. Whenever Ember code runs after the
+setup phase, it is in response to an event from this list.
 
 ### How ember listens for events
 
@@ -322,14 +344,14 @@ Lets consider some subtle consequences of this simple algorihtm:
 
 There are also some things which are not obvious:
 
-There is no "singleton" runloop. This is confusing because documentation
-(including this guide) uses the phrase "the runloop" to refer to the whole
-system but it is important to note that there is not a single instance of the
-runloop in memory (unlike the [Ember
-container](http://emberjs.com/guides/understanding-ember/dependency-injection-and-service-lookup/#toc_dependency-management-in-ember-js)
-which is a singleton). There is no "the" runloop, instead there can
-be multiple instances of "a" runloop. It is true that Ember will usually only
-create one runloop per DOM event but this is not always the case. For example:
+Something that is not obvious from that description is that there is no
+"singleton" runloop. This is confusing because documentation (including this
+guide) uses the phrase "the runloop" to refer to the whole system but it is
+important to note that there is not a single instance of the runloop in memory
+(unlike the [Ember container](http://emberjs.com/guides/understanding-ember/dependency-injection-and-service-lookup/#toc_dependency-management-in-ember-js)
+which is a singleton). There is no "the" runloop, instead there can be multiple
+instances of "a" runloop. It is true that Ember will usually only create one
+runloop per DOM event but this is not always the case. For example:
 
 * When you use `Ember.run` (see below) you will be creating your own
   runloop that may go through its full lifecycle while the runloop thatEmber
