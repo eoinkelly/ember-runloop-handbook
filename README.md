@@ -216,7 +216,7 @@ refreshing your understanding of how DOM events work. To get the most of the
 following discussion you should be familiar with how the browser propagates
 events and what the phrases "capturing phase" and "bubbling phase" mean.
 
-Ember registers listeners for those 28 events similarly to how we might do it
+Ember registers listeners for those 29 events similarly to how we might do it
 ourselves with jQuery.  More specifically:
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
