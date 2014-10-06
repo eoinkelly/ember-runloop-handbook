@@ -548,7 +548,7 @@ In the API we have:
 * 1 convenience function for forcing bindings to settle
     * `Ember.run.sync`
 
-| Function Name | runloop (current/future/always-new) | Queue (`actions`/chosen by param) | Create new runloop? (always/if required/never) | Notices `Ember.testing`?  (yes/no) | Runs callback in current JS event loop turn
+| Function | Which runloop? | Which queue? | Creates new runloop? | Notices `Ember.testing`? | Runs callback in current JS event loop turn?
 | ----------------------------- | -------------------------- | -------- | ----------- | ----------- |----------- |
 | `Ember.run`		            | always-new | `actions` | Always | No | Yes |
 | `Ember.run.debounce`		    | always-new | `actions` | Always | No | No |
