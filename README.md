@@ -65,7 +65,7 @@ server sends HTML back as a response.
 The browser then parses this HTML response. Every time it finds a script it executes it
 immediately(*) Lets call this the _setup phase_.  This _setup phase_ happens
 well before the user sees any content or gets a chance to interact with the DOM.
-Once a script is finished executing the Browser never runs it again.
+Once a script is finished executing the browser never runs it again.
 
 (*) Things like `defer` tweak this somewhat but this is a useful simplification.
 
@@ -216,7 +216,7 @@ Ember registers listeners for those these events similarly to how we might do it
 ourselves with jQuery i.e.
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
-* This element is `<body>` unless your application specifies a `rootElement`
+* This element is usually `<body>`. If you specify a `rootElement` then that will be used instead.
 * Ember attaches its listeners to the "bubbling" phase.
 
 ## Example: A simplistic approach
@@ -246,7 +246,7 @@ different types of work to be interleaved.
 
 The code in this app is obviously very incomplete and I'm sure you can see many
 ways it could be improved. However there are some problems that might not be
-obvious at first, problems that you will only start to noticet when the app
+obvious at first, problems that you will only start to notice when the app
 grows in complexity. To understand these lets look at what it is _not_ doing:
 
 1. It is _not coordinating its access of the DOM_. Every time we an app updates the DOM the
@@ -286,7 +286,7 @@ This set of queues and the code that manages them **is** the Ember runloop.
 
 You can see a summary of the purpose of each queue in the [runloop
 Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
-but today we are going to focus on the queues themselves.
+but here we are going to focus on the queues themselves.
 
 ## How it works
 
@@ -334,8 +334,6 @@ Lets consider some subtle consequences of this simple algorihtm:
     doing any jobs that result from those jobs - Ember is a pretty great
     employee to have working for you!
 
-There are also some things which are not obvious:
-
 Something that is not obvious from that description is that there is no
 "singleton" runloop. This is confusing because documentation (including this
 guide) uses the phrase "the runloop" to refer to the whole system but it is
@@ -348,7 +346,7 @@ runloop per DOM event but this is not always the case. For example:
 * When you use `Ember.run` (see below) you will be creating your own
   runloop that may go through its full lifecycle while the runloop thatEmber
   uses is still accepting jobs.
-* Usually Ember application will boot within a single runloop but if you
+* Usually an Ember application will boot within a single runloop but if you
   enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
 
 Another consequence of the runloop not being a singleton it that it does not
@@ -406,7 +404,7 @@ Ember.Application.initializer({
 
 ## What are _autoruns_?
 
-In Ember calls to any of
+Calls to any of
 
 * `run.schedule`
 * `run.scheduleOnce`
@@ -431,9 +429,9 @@ $('a').click(function(){
 });
 ```
 
-When you call `schedule` and `scheduleOnce` Ember notices that there is not a
-currently open runloop so it opens one and schedules it to close on the next
-turn of the JS event loop.
+When you call `schedule` Ember notices that there is not a currently open
+runloop so it opens one and schedules it to close on the next turn of the JS
+event loop.
 
 Here is some pseudocode to describe what happens:
 
@@ -567,7 +565,7 @@ Legend:
 
 ## A note about future work
 
-There are 2 functions in the runloop API let us schedule "future work":
+There are two functions in the runloop API let us schedule "future work":
 
 1. `Ember.run.later`
 1. `Ember.run.next`
@@ -595,16 +593,16 @@ The key points:
 
 Consequences:
 
-* When you give a function to one of the _future work_ API functions you cannot
+* When you give a function to one of the future work API functions you cannot
   know which runloop it will run in!
-    * It may share a runloop iwth other _future work_ functions.
-    * It will only every share with other functions from the _future work queue_
+    * It may share a runloop with other future work functions.
+    * It will only every share with other functions from the future work queue
       - it will not share a runloop with other Ember code or anything you
       explicitly pass to `Ember.run` yourself.
-* You can only directly schedule _future work_ onto the `actions` queue. If you need to run
+* You can only directly schedule future work onto the `actions` queue. If you need to run
   something on a different queue of that future runloop you will need to
   schedule it _from_ that `actions` queue callback.
-* _future work_ APIs let you specify _some_ future runloop but not exactly which
+* Future work APIs let you specify _some_ future runloop but not exactly which
   one.
 
 ## A note about rate control
@@ -637,7 +635,7 @@ The primary documentation for the Ember runloop is [Official Ember Run-loop
 guide](http://emberjs.com/guides/understanding-ember/run-loop/) and the [Ember
 API docs](http://emberjs.com/api/)
 
-These are other sources I studied in compiling this research:
+These are other sources I studied in compiling this guide:
 
 * [Ember source code](https://github.com/emberjs/ember.js)
 * Books
