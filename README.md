@@ -77,7 +77,7 @@ Usually these are created in response to some action from one of:
 3. Internal timers e.g. a particular timer has completed
 
 However there are a few events that the browser generates itself to tell
-Javascript about some important event in the lifecycle of the page. The must
+Javascript about some important event in the lifecycle of the page. The most
 widely used of these is `DOMContentLoaded` which tells Javascript that the HTML
 has been fully parsed and the DOM (the memory structure the browser builds by
 parsing the HTML) is complete. This is significant for Javascript because it
