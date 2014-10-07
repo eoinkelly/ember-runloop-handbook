@@ -187,24 +187,22 @@ default](http://emberjs.com/api/classes/Ember.View.html#toc_event-names) which I
 11. click
 12. doubleClick
 13. mouseMove
-14. focusIn
-15. focusOut
-16. mouseEnter
-17. mouseLeave
-18. submit
-19. change
-20. focusIn
-21. focusOut
-22. input
-23. dragStart
-24. drag
-25. dragEnter
-26. dragLeave
-27. dragOver
-28. dragEnd
-29. drop
+14. mouseEnter
+15. mouseLeave
+16. submit
+17. change
+18. focusIn
+19. focusOut
+20. input
+21. dragStart
+22. drag
+23. dragEnter
+24. dragLeave
+25. dragOver
+26. dragEnd
+27. drop
 
-These are 29 the entry points into our code. Whenever Ember code runs after the
+These are the entry points into our code. Whenever Ember code runs after the
 setup phase, it is in response to an event from this list.
 
 ## How ember listens for events
@@ -214,8 +212,8 @@ refreshing your understanding of how DOM events work. To get the most of the
 following discussion you should be familiar with how the browser propagates
 events and what the phrases "capturing phase" and "bubbling phase" mean.
 
-Ember registers listeners for those 29 events similarly to how we might do it
-ourselves with jQuery.  More specifically:
+Ember registers listeners for those these events similarly to how we might do it
+ourselves with jQuery i.e.
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
 * This element is `<body>` unless your application specifies a `rootElement`
