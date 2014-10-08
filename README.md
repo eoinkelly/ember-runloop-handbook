@@ -327,7 +327,7 @@ Lets consider some subtle consequences of this simple algorithm:
     2. Perform the work
 
     but this is subtly incorrect. Functions that have been scheduled on a runloop queue
-    can themselves schedule function on **any** queue in the same runloop. It is
+    can themselves schedule functions on **any** queue in the same runloop. It is
     true that once the runloop starts executing the queues that code **outside** the
     queues cannot schedule new jobs. In a sense the initial set of jobs that are
     scheduled are a "starter set" of work and Ember commits to doing it and also
