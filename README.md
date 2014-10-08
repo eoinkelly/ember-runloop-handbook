@@ -306,12 +306,12 @@ schedule jobs on the queues.
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
    though we have closed them to other code.
 5. The [runloop Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
-   has an excellent visualisaiton of how jobs are run but in brief:
+   has an excellent visualisation of how jobs are run but in brief:
     1. Scan the queues array, starting at the first until you find a job. Finish if all queues are empty.
     2. Run the job (aka execute the callback function)
     3. Go to step 1
 
-Lets consider some subtle consequences of this simple algorihtm:
+Lets consider some subtle consequences of this simple algorithm:
 
 * Ember does a full queue scan after each *job* - it does not attempt to finish
   a full queue before checking for earlier work.
