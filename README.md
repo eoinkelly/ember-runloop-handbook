@@ -249,7 +249,7 @@ ways it could be improved. However there are some problems that might not be
 obvious at first, problems that you will only start to notice when the app
 grows in complexity. To understand these lets look at what it is _not_ doing:
 
-1. It is _not coordinating its access of the DOM_. Every time we an app updates the DOM the
+1. It is _not coordinating its access of the DOM_. Every time the app updates the DOM the
    browser did a layout and paint. These are very expensive operations especially
    on mobile.
 2. It has _no way of telling us when DOM updating is finished_. We can certainly
