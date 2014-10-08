@@ -89,7 +89,7 @@ space (or _mise en place_ if you prefer) - it created the objects it would now n
 in detail what events it cares about e.g.
 
 > Hey browser, wake me up and run this function I'm giving you whenever the user
-> clicks on an element with an id attribute of `#do-stuff`.
+> clicks on an element with an id attribute of `do-stuff`.
 
 The description above makes it look like the browser the one giving all the
 orders but the browser is a team player and has a few things it can do to help
@@ -155,7 +155,7 @@ Since Ember is Javascript we already know quite a bit about how Ember works:
   on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
   alarm clock (e.g. `setTimeout`)
 
-## Where does the framework end an my app begin
+## Where does the framework end and my app begin
 
 How does your Ember _application_ relate to the Ember _framework_? The machinery
 for responding to events is part of Ember _framework_ itself but it does not
@@ -249,8 +249,8 @@ ways it could be improved. However there are some problems that might not be
 obvious at first, problems that you will only start to notice when the app
 grows in complexity. To understand these lets look at what it is _not_ doing:
 
-1. It is _not coordinating its access of the DOM_. Every time we an app updates the DOM the
-   browser did a layout and paint. These are very expensive operations especially
+1. It is _not coordinating its access of the DOM_. Every time an app updates the DOM, the
+   browser does a layout and paint. These are very expensive operations especially
    on mobile.
 2. It has _no way of telling us when DOM updating is finished_. We can certainly
    hook into the click handler for the "Mark all completed" button but what if
@@ -519,15 +519,15 @@ In the API we have:
 
 * 1 way of running a given callback in a new runloop
     * `Ember.run`
-* 1 way of adding a callback to an the currently open runloop
+* 1 way of adding a callback to the currently open runloop
     * `Ember.run.schedule`
-* 2 ways to add a callback to current runloop and ensure that it is only added once.
+* 2 ways to add a callback to the current runloop and ensure that it is only added once.
     * `Ember.run.scheduleOnce`
     * `Ember.run.once`
 * 2 ways to add a callback to some future runloop
     * `Ember.run.later`
     * `Ember.run.next`
-* 2 ways to of doing rate control on a callback. These control how often callback is called (it will get its own runloop each time)
+* 2 ways of doing rate control on a callback. These control how often a callback is called (it will get its own runloop each time)
     * `Ember.run.debounce`
     * `Ember.run.throttle`
 * 1 way of cancelling work scheduled for a future runloop or rate control
@@ -565,7 +565,7 @@ Legend:
 
 ## A note about future work
 
-There are two functions in the runloop API let us schedule "future work":
+There are two functions in the runloop API that let us schedule "future work":
 
 1. `Ember.run.later`
 1. `Ember.run.next`
