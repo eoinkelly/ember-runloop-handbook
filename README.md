@@ -297,7 +297,7 @@ First lets get some terminology sorted:
 
 How Ember handles events:
 
-1. A browser event happens and Embers registered listener for that event is triggered.
+1. A browser event happens and Ember's registered listener for that event is triggered.
 2. Early on in its response to the event, Ember opens a set of queues and starts
    accepting jobs.
 3. As Ember works its way through your application code, it continues to
