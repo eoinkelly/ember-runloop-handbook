@@ -527,7 +527,7 @@ In the API we have:
 * 2 ways to add a callback to some future runloop
     * `Ember.run.later`
     * `Ember.run.next`
-* 2 ways to of doing rate control on a callback. These control how often callback is called (it will get its own runloop each time)
+* 2 ways of doing rate control on a callback. These control how often a callback is called (it will get its own runloop each time)
     * `Ember.run.debounce`
     * `Ember.run.throttle`
 * 1 way of cancelling work scheduled for a future runloop or rate control
