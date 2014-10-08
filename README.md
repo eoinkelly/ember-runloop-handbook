@@ -344,7 +344,7 @@ instances of "a" runloop. It is true that Ember will usually only create one
 runloop per DOM event but this is not always the case. For example:
 
 * When you use `Ember.run` (see below) you will be creating your own
-  runloop that may go through its full lifecycle while the runloop thatEmber
+  runloop that may go through its full lifecycle while the runloop that Ember
   uses is still accepting jobs.
 * Usually an Ember application will boot within a single runloop but if you
   enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
