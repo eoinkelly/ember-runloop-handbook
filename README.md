@@ -77,7 +77,7 @@ Usually these are created in response to some action from one of:
 3. Internal timers e.g. a particular timer has completed
 
 However there are a few events that the browser generates itself to tell
-Javascript about some important event in the lifecycle of the page. The must
+Javascript about some important event in the lifecycle of the page. The most
 widely used of these is `DOMContentLoaded` which tells Javascript that the HTML
 has been fully parsed and the DOM (the memory structure the browser builds by
 parsing the HTML) is complete. This is significant for Javascript because it
@@ -249,7 +249,7 @@ ways it could be improved. However there are some problems that might not be
 obvious at first, problems that you will only start to notice when the app
 grows in complexity. To understand these lets look at what it is _not_ doing:
 
-1. It is _not coordinating its access of the DOM_. Every time we an app updates the DOM the
+1. It is _not coordinating its access of the DOM_. Every time the app updates the DOM the
    browser did a layout and paint. These are very expensive operations especially
    on mobile.
 2. It has _no way of telling us when DOM updating is finished_. We can certainly
@@ -297,7 +297,7 @@ First lets get some terminology sorted:
 
 How Ember handles events:
 
-1. A browser event happens and Embers registered listener for that event is triggered.
+1. A browser event happens and Ember's registered listener for that event is triggered.
 2. Early on in its response to the event, Ember opens a set of queues and starts
    accepting jobs.
 3. As Ember works its way through your application code, it continues to
@@ -306,12 +306,12 @@ schedule jobs on the queues.
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
    though we have closed them to other code.
 5. The [runloop Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
-   has an excellent visualisaiton of how jobs are run but in brief:
+   has an excellent visualisation of how jobs are run but in brief:
     1. Scan the queues array, starting at the first until you find a job. Finish if all queues are empty.
     2. Run the job (aka execute the callback function)
     3. Go to step 1
 
-Lets consider some subtle consequences of this simple algorihtm:
+Lets consider some subtle consequences of this simple algorithm:
 
 * Ember does a full queue scan after each *job* - it does not attempt to finish
   a full queue before checking for earlier work.
@@ -327,7 +327,7 @@ Lets consider some subtle consequences of this simple algorihtm:
     2. Perform the work
 
     but this is subtly incorrect. Functions that have been scheduled on a runloop queue
-    can themselves schedule function on **any** queue in the same runloop. It is
+    can themselves schedule functions on **any** queue in the same runloop. It is
     true that once the runloop starts executing the queues that code **outside** the
     queues cannot schedule new jobs. In a sense the initial set of jobs that are
     scheduled are a "starter set" of work and Ember commits to doing it and also
@@ -344,7 +344,7 @@ instances of "a" runloop. It is true that Ember will usually only create one
 runloop per DOM event but this is not always the case. For example:
 
 * When you use `Ember.run` (see below) you will be creating your own
-  runloop that may go through its full lifecycle while the runloop thatEmber
+  runloop that may go through its full lifecycle while the runloop that Ember
   uses is still accepting jobs.
 * Usually an Ember application will boot within a single runloop but if you
   enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
@@ -527,7 +527,7 @@ In the API we have:
 * 2 ways to add a callback to some future runloop
     * `Ember.run.later`
     * `Ember.run.next`
-* 2 ways to of doing rate control on a callback. These control how often callback is called (it will get its own runloop each time)
+* 2 ways of doing rate control on a callback. These control how often a callback is called (it will get its own runloop each time)
     * `Ember.run.debounce`
     * `Ember.run.throttle`
 * 1 way of cancelling work scheduled for a future runloop or rate control
