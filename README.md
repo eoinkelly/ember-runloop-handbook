@@ -83,7 +83,7 @@ has been fully parsed and the DOM (the memory structure the browser builds by
 parsing the HTML) is complete. This is significant for Javascript because it
 does most of its setup work in response to this event.
 
-Javascript is lazy but well perpared!  During the _setup phase_, Javascript prepared its work
+Javascript is lazy but well prepared!  During the _setup phase_, Javascript prepared its work
 space (or _mise en place_ if you prefer) - it created the objects it would now need
  to respond to orders (events) from the browser and also told the browser
 in detail what events it cares about e.g.
@@ -114,7 +114,7 @@ computers it asks the browser to do it:
 
     > Browser: cool.
 
-We usually refer to this this _talking to other systems_ stuff as Web APIs e.g.
+We usually refer to this _talking to other systems_ stuff as Web APIs e.g.
 
 * XHR (AJAX) requests
 * Web workers
@@ -138,7 +138,7 @@ A solid understanding of this stuff is required to understand the runloop so if
 you are unclear about any of this and want to dig a little deeper I recommend a
 [wonderful video by Philip Roberts at Scotland JS](http://vimeo.com/96425312)
 that goes into the Javascript event loop in more detail. It is a short watch and includes
-a few "aha!" inducing diagrams.
+a few "aha!"-inducing diagrams.
 
 # Enter the Ember!
 
@@ -212,7 +212,7 @@ refreshing your understanding of how DOM events work. To get the most of the
 following discussion you should be familiar with how the browser propagates
 events and what the phrases "capturing phase" and "bubbling phase" mean.
 
-Ember registers listeners for those these events similarly to how we might do it
+Ember registers listeners for these events similarly to how we might do it
 ourselves with jQuery i.e.
 
 * Ember attaches *all* its listeneners to a single element in the DOM.
@@ -580,8 +580,8 @@ The key points:
 * Ember keeps an internal queue of "future work" in the form of an array of
   timestamp and function pairs e.g. `[(timestamp, fn), (timestamp, fn) ... ]`
 * It uses this queue to manage _work you have asked it to do on some runloop that is not the current one_.
-* Each of the API functions above is a different way of adding a (timestamp,
-  callback) pair to this array.
+* Each of the API functions above is a different way of adding a `(timestamp,
+  callback)` pair to this array.
 * Ember does now know exactly when it will get a chance to execute this future
   work (Javascript might be busy doing something else).
 * Each time it checks the timers queue it executes all the functions whose timestamps
@@ -615,13 +615,13 @@ Ember provides two flavors of rate control.
     * Used to guarantee a minimum time between calls to a particular callback
 
 These functions are useful becuase they allow us to control when the given
-callbck is _not_ run. When it is actually run, these functions use `Ember.run`
+callback is _not_ run. When it is actually run, these functions use `Ember.run`
 so these functions can be thought of  as "`Ember.run` with some extra controls
 about when the function should be run"
 
 # Summary
 
-It can take a while to get our heads around the subtlties of the runloop. In
+It can take a while to get our heads around the subtleties of the runloop. In
 exchange we get the performance and scaling benefits that the runloop provides.
 I hope that you now feel more equipped to use the runloop skillfully.
 
