@@ -4,6 +4,33 @@ by [Eoin Kelly](https://twitter.com/eoinkelly)
 
 ![Creative Commons License](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)
 
+# Table of contents
+
+- [Contributing](#contributing)
+- [Introduction](#introduction)
+    - [Naming is hard](#naming-is-hard)
+- [Why do we have a runloop?](#why-do-we-have-a-runloop)
+- [Enter the Ember!](#enter-the-ember)
+    - [Things we already know](#things-we-already-know)
+    - [Where does the framework end and my app begin](#where-does-the-framework-end-and-my-app-begin)
+    - [What events does Ember listen to?](#what-events-does-ember-listen-to)
+    - [How ember listens for events](#how-ember-listens-for-events)
+    - [Example: A simplistic approach](#example-a-simplistic-approach)
+    - [Enter the runloop](#enter-the-runloop)
+    - [How it works](#how-it-works)
+    - [How often do runloops happen?](#how-often-do-runloops-happen)
+    - [Visualising the runloop for yourself](#visualising-the-runloop-for-yourself)
+    - [Enough with the mousemove already!](#enough-with-the-mousemove-already)
+    - [What are _autoruns_?](#what-are-autoruns)
+    - [How is runloop behaviour different when testing?](#how-is-runloop-behaviour-different-when-testing)
+- [How do I use the runloop?](#how-do-i-use-the-runloop)
+    - [A note about future work](#a-note-about-future-work)
+    - [A note about rate control](#a-note-about-rate-control)
+- [Summary](#summary)
+- [Appendices](#appendices)
+    - [Sources](#sources)
+    - [Other resources on the Runloop](#other-resources-on-the-runloop)
+
 # Contributing
 
 If you spot any of the (sadly inevitable) errors you would be doing me a great
@@ -642,3 +669,6 @@ These are other sources I studied in compiling this guide:
     * [Developing an Ember Edge](http://bleedingedgepress.com/our-books/developing-an-ember-edge/)
     * [Ember.js in Action](http://www.manning.com/skeie/)
 
+## Other resources on the Runloop
+
+* [The Ember Run Loop by Jason Madsen at Salt Lake City Ember Meetup](https://youtu.be/G4DdNMLubgQ)
