@@ -189,8 +189,8 @@ for responding to events is part of Ember _framework_ itself but it does not
 have a meaningful response without your _application_ code.
 
 For example if the user is on `/#/blog/posts` and clicks a link to go to
-`/#/authors/shelly` the Ember _framework_ will recieve the click event but it
-won't be able to do anything meaningful with it without
+`/#/authors/shelly` the Ember _framework_ will receive the click event but it
+won't be able to do anything meaningful with it without:
 
 1. A Router map to tell it how to understand the URL
 2. The Route objects themselves e.g. `BlogRoute`, `PostsRoute`, `AuthorsRoute`
