@@ -100,7 +100,7 @@ The browser does most of its communication with Javascript by sending "events".
 Usually these are created in response to some action from one of:
 
 1. The user e.g. moves their mouse (`mousemove`)
-2. The network e.g. an asset have been loaded on the page (`load`)
+2. The network e.g. an asset has been loaded on the page (`load`)
 3. Internal timers e.g. a particular timer has completed
 
 However there are a few events that the browser generates itself to tell
@@ -157,7 +157,7 @@ interact and to understand the two phases:
 
 1. In the short _setup phase_ the browser runs each script it finds on the page
 from start to finish. Javascript uses this as time to do some preparation for next phase.
-2. Javascript spends most of of its life _responding to events_. Many events
+2. Javascript spends most of its life _responding to events_. Many events
 come from the user but Javascript can also schedule events for itself by using
 the many services (web APIs) that the browser provides.
 
