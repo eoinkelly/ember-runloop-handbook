@@ -118,7 +118,7 @@ in detail what events it cares about e.g.
 > Hey browser, wake me up and run this function I'm giving you whenever the user
 > clicks on an element with an id attribute of `do-stuff`.
 
-The description above makes it look like the browser the one giving all the
+The description above makes it look like the browser is the one giving all the
 orders but the browser is a team player and has a few things it can do to help
 Javascript get the job done:
 
@@ -176,7 +176,7 @@ Since Ember is Javascript we already know quite a bit about how Ember works:
 * Apart from when the code is first found, all Ember framework and application
   code is run in response to "events" from the browser.
 * The `DOMContentLoaded` event is significant in the life of an Ember app. It tells
-  it that it now has a full DOM to play with. Ember will do most of its "setup work"
+  Ember that it now has a full DOM to play with. Ember will do most of its "setup work"
   (registering for event listeners etc.) in response to this event.
 * Your Ember app can schedule its own events by asking the browser to do some work
   on its behalf (e.g. AJAX requests) or simply by asking the browser to be its
