@@ -609,7 +609,7 @@ The key points:
 * It uses this queue to manage _work you have asked it to do on some runloop that is not the current one_.
 * Each of the API functions above is a different way of adding a `(timestamp,
   callback)` pair to this array.
-* Ember does now know exactly when it will get a chance to execute this future
+* Ember does not know exactly when it will get a chance to execute this future
   work (Javascript might be busy doing something else).
 * Each time it checks the timers queue it executes all the functions whose timestamps
   are in the past so the future work API functions are creative in their
