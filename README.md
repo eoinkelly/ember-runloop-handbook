@@ -623,7 +623,7 @@ Consequences:
 * When you give a function to one of the future work API functions you cannot
   know which runloop it will run in!
     * It may share a runloop with other future work functions.
-    * It will only every share with other functions from the future work queue
+    * It will only share with other functions from the future work queue
       - it will not share a runloop with other Ember code or anything you
       explicitly pass to `Ember.run` yourself.
 * You can only directly schedule future work onto the `actions` queue. If you need to run
