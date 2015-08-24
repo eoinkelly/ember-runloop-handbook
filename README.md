@@ -376,7 +376,7 @@ runloop per DOM event but this is not always the case. For example:
 * Usually an Ember application will boot within a single runloop but if you
   enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
 
-Another consequence of the runloop not being a singleton it that it does not
+Another consequence of the runloop not being a singleton is that it does not
 function as a "global gateway" to DOM access for the Ember app. It is not
 correct to say that the runloop is the "gatekeeper" to all DOM access in Ember,
 rather that "coordinated DOM access" is a pleasant (and deliberate!) side-effect
