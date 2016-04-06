@@ -252,7 +252,7 @@ The pattern of how Javascript (Ember) works is periods of intense activity in
 response to some event followed by idleness until the next event happens. Lets
 dig a little deeper into these periods of intense activity.
 
-We already know that the first code to get run in reponse to an event is the
+We already know that the first code to get run in response to an event is the
 listener function that Ember registered with the browser. What happens after
 that?
 
