@@ -54,7 +54,7 @@ This is not reference documentation - the [Ember API
 docs](http://emberjs.com/api/) have that nicely covered. This isn't even the
 _"I'm an experienced dev, just give me the concepts in a succinct way"_
 documentation - the [Official Ember Run-loop
-guide](http://emberjs.com/guides/understanding-ember/run-loop/) has that
+guide](https://guides.emberjs.com/v2.7.0/applications/run-loop) has that
 covered. This is a longer, more detailed look at the runloop.
 
 ## Naming is hard
