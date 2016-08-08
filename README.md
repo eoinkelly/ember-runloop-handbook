@@ -252,7 +252,7 @@ The pattern of how Javascript (Ember) works is periods of intense activity in
 response to some event followed by idleness until the next event happens. Lets
 dig a little deeper into these periods of intense activity.
 
-We already know that the first code to get run in reponse to an event is the
+We already know that the first code to get run in response to an event is the
 listener function that Ember registered with the browser. What happens after
 that?
 
@@ -376,7 +376,7 @@ runloop per DOM event but this is not always the case. For example:
 * Usually an Ember application will boot within a single runloop but if you
   enable the [Ember Inspector](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi?hl=en) then many more runloops happen at boot time.
 
-Another consequence of the runloop not being a singleton it that it does not
+Another consequence of the runloop not being a singleton is that it does not
 function as a "global gateway" to DOM access for the Ember app. It is not
 correct to say that the runloop is the "gatekeeper" to all DOM access in Ember,
 rather that "coordinated DOM access" is a pleasant (and deliberate!) side-effect
@@ -609,7 +609,7 @@ The key points:
 * It uses this queue to manage _work you have asked it to do on some runloop that is not the current one_.
 * Each of the API functions above is a different way of adding a `(timestamp,
   callback)` pair to this array.
-* Ember does now know exactly when it will get a chance to execute this future
+* Ember does not know exactly when it will get a chance to execute this future
   work (Javascript might be busy doing something else).
 * Each time it checks the timers queue it executes all the functions whose timestamps
   are in the past so the future work API functions are creative in their
@@ -623,7 +623,7 @@ Consequences:
 * When you give a function to one of the future work API functions you cannot
   know which runloop it will run in!
     * It may share a runloop with other future work functions.
-    * It will only every share with other functions from the future work queue
+    * It will only share with other functions from the future work queue
       - it will not share a runloop with other Ember code or anything you
       explicitly pass to `Ember.run` yourself.
 * You can only directly schedule future work onto the `actions` queue. If you need to run
