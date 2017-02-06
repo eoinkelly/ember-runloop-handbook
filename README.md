@@ -54,7 +54,7 @@ This is not reference documentation - the [Ember API
 docs](http://emberjs.com/api/) have that nicely covered. This isn't even the
 _"I'm an experienced dev, just give me the concepts in a succinct way"_
 documentation - the [Official Ember Run-loop
-guide](https://guides.emberjs.com/v2.7.0/applications/run-loop) has that
+guide](https://guides.emberjs.com/v2.11.0/applications/run-loop) has that
 covered. This is a longer, more detailed look at the runloop.
 
 ## Naming is hard
@@ -311,8 +311,8 @@ console.log(Ember.run.queues);
 Each queue corresponds to a "phase of work" identified by the Ember core team.
 This set of queues and the code that manages them **is** the Ember runloop.
 
-You can see a summary of the purpose of each queue in the [runloop
-Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
+You can see a summary of the purpose of each queue in the [Runloop
+Guide](https://guides.emberjs.com/v2.11.0/applications/run-loop/#toc_an-example-of-the-internals)
 but here we are going to focus on the queues themselves.
 
 ## How it works
@@ -332,7 +332,7 @@ schedule jobs on the queues.
 4. Near the end of its response to the event Ember closes the queue-set and starts
 running jobs on the queues. Scheduled jobs can themselves still add jobs to the queues even
    though we have closed them to other code.
-5. The [runloop Guide](http://emberjs.com/guides/understanding-ember/run-loop/#toc_an-example-of-the-internals)
+5. The [Runloop Guide](https://guides.emberjs.com/v2.11.0/applications/run-loop/#toc_an-example-of-the-internals)
    has an excellent visualisation of how jobs are run but in brief:
     1. Scan the queues array, starting at the first until you find a job. Finish if all queues are empty.
     2. Run the job (aka execute the callback function)
@@ -365,7 +365,7 @@ Something that is not obvious from that description is that there is no
 "singleton" runloop. This is confusing because documentation (including this
 guide) uses the phrase "the runloop" to refer to the whole system but it is
 important to note that there is not a single instance of the runloop in memory
-(unlike the [Ember container](http://emberjs.com/guides/understanding-ember/dependency-injection-and-service-lookup/#toc_dependency-management-in-ember-js)
+(unlike the [Ember container](https://guides.emberjs.com/v2.11.0/applications/dependency-injection/)
 which is a singleton). There is no "the" runloop, instead there can be multiple
 instances of "a" runloop. It is true that Ember will usually only create one
 runloop per DOM event but this is not always the case. For example:
@@ -391,7 +391,7 @@ DOM event that it handles.
 
 ## Visualising the runloop for yourself
 
-This repo also contains the [noisy runloop kit]() which is trivial demo app and
+This repo also contains the [noisy runloop kit](https://github.com/eoinkelly/ember-runloop-handbook/tree/master/noisy-runloop-kit) which is trivial demo app and
 a copy of Ember that I have patched to be very noisy about what its runloop
 does. You can add features to the demo app and see how the actions the runloop takes in
 response in the console. You can also use the included version of Ember in your own
