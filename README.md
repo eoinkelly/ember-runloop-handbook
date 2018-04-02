@@ -46,8 +46,8 @@ can be your guide.
 We are about to take a deep dive into the Ember.js runloop. Together we will
 answer these questions:
 
-2. Why does Ember have this runloop thing?
-1. What is the runloop?
+1. Why does Ember have this runloop thing?
+2. What is the runloop?
 3. How can we use it skillfully?
 
 This is not reference documentation - the [Ember API
