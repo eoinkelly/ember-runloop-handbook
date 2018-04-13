@@ -83,7 +83,7 @@ name.
 
 On our journey to understand the runloop we must first understand the
 environment it lives in and the problems it is trying to solve.  Lets set the
-scene by refreshing a few fundementals about how Javascript runs. (If you are an
+scene by refreshing a few fundamentals about how Javascript runs. (If you are an
 experienced Javascript developer you may want to just skip this part)
 
 Our story begins with when the browser sends a request to the server and the
@@ -242,7 +242,7 @@ events and what the phrases "capturing phase" and "bubbling phase" mean.
 Ember registers listeners for these events similarly to how we might do it
 ourselves with jQuery i.e.
 
-* Ember attaches *all* its listeneners to a single element in the DOM.
+* Ember attaches *all* its listeners to a single element in the DOM.
 * This element is usually `<body>`. If you specify a `rootElement` then that will be used instead.
 * Ember attaches its listeners to the "bubbling" phase.
 
@@ -641,7 +641,7 @@ Ember provides two flavors of rate control.
 * `Ember.run.throttle`
     * Used to guarantee a minimum time between calls to a particular callback
 
-These functions are useful becuase they allow us to control when the given
+These functions are useful because they allow us to control when the given
 callback is _not_ run. When it is actually run, these functions use `Ember.run`
 so these functions can be thought of  as "`Ember.run` with some extra controls
 about when the function should be run"
