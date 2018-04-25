@@ -163,7 +163,7 @@ the many services (web APIs) that the browser provides.
 
 A solid understanding of this stuff is required to understand the runloop so if
 you are unclear about any of this and want to dig a little deeper I recommend a
-[wonderful video by Philip Roberts at Scotland JS](http://vimeo.com/96425312)
+[wonderful video by Philip Roberts at JSConf EU](https://youtu.be/8aGhZQkoFbQ)
 that goes into the Javascript event loop in more detail. It is a short watch and includes
 a few "aha!"-inducing diagrams.
 
